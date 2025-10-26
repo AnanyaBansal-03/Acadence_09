@@ -1,0 +1,58 @@
+# Ignore node modules
+node_modules/
+**/node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Dependency directories (cached builds)
+.pnp.cjs
+.pnp.js
+
+# Build output
+dist/
+build/
+out/
+.vite/
+.parcel-cache/
+.cache/
+
+# Runtime files
+pids
+*.pid
+*.seed
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment variables
+.env
+.env.*.local
+.env.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc
+*.tgz
+*.gz
+*.lock
+
+# Optional: local debug and temporary files
+*.local
+*.tmp
