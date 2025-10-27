@@ -92,8 +92,8 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">Assign Marks to Students</h2>
-          <p className="text-gray-600 dark:text-gray-400">Manage and update student grades by class</p>
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">View Marks of Students</h2>
+          <p className="text-gray-600 dark:text-gray-400">View student grades by class</p>
         </div>
 
         {/* Class Selection */}

@@ -48,14 +48,14 @@ function App() {
             </header>
 
             {/* Hero Section */}
-            <section className="relative h-screen flex items-center px-6 md:px-10 lg:px-16">
+            <section className="relative h-screen flex items-center px-6 md:px-10 lg:px-20">
               <div className="max-w-4xl w-full z-10 mr-auto">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight mb-6">
                   <div className="mb-2">AI-Powered</div>
                   <div className="flex gap-2 md:gap-3 items-center flex-wrap">
                     <RotatingText
                       texts={['Academic', 'Smart', 'Intelligent', 'Modern']}
-                      mainClassName="px-2 md:px-3 bg-blue-500 text-white overflow-hidden py-0.5 md:py-1 justify-center rounded-md text-4xl md:text-5xl lg:text-6xl font-bold"
+                      mainClassName="px-2 md:px-3 bg-blue-500 text-white overflow-hidden py-0.5 md:py-1 justify-center rounded-md text-4xl md:text-5xl lg:text-7xl font-bold"
                       staggerFrom={"last"}
                       initial={{ y: "100%" }}
                       animate={{ y: 0 }}
@@ -89,7 +89,7 @@ function App() {
                   loop
                   muted
                   playsInline
-                  className="w-[300px] md:w-[350px] lg:w-[400px] object-cover"
+                  className="w-[300px] md:w-[350px] lg:w-[500px] object-cover"
                 />
               </div>
             </section>

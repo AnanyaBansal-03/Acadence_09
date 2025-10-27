@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from "../lib/supabaseClient";
 import { useNavigate } from 'react-router-dom';
-
-// Import modular components
-import TeacherNavbar from '../components/teacher/TeacherNavbar';
-import TeacherSidebar from '../components/teacher/TeacherSidebar';
 import TeacherAttendance from '../components/teacher/TeacherAttendance';
 import TeacherStudents from '../components/teacher/TeacherStudents';
 
@@ -12,7 +8,6 @@ const TeacherDashboard = () => {
   const [activeFeature, setActiveFeature] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [teacherData, setTeacherData] = useState(null);
@@ -24,26 +19,39 @@ const TeacherDashboard = () => {
   });
   const navigate = useNavigate();
 
+  // Add this useEffect to handle component cleanup - INSIDE the component
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
+    return () => {
+      setDashboardData({
+        classSchedule: { labels: [], data: [] },
+        attendanceStats: { labels: ['Present', 'Absent', 'Late'], data: [0, 0, 0] },
+        allClasses: [],
+        allStudents: []
+      });
+    };
+  }, []);
+
+  useEffect(() => {
     fetchTeacherData();
   }, []);
 
   // Handle clicking outside profile dropdown
+  const profileOpenRef = useRef(profileOpen);
+
+  useEffect(() => {
+    profileOpenRef.current = profileOpen;
+  }, [profileOpen]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (profileOpen && !e.target.closest('.profile-dropdown') && !e.target.closest('.profile-button')) {
+      if (profileOpenRef.current && !e.target.closest('.profile-dropdown') && !e.target.closest('.profile-button')) {
         setProfileOpen(false);
       }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [profileOpen]);
+  }, []);
 
   const fetchTeacherData = async () => {
     try {
@@ -265,6 +273,7 @@ const TeacherDashboard = () => {
       allStudents: uniqueStudents
     };
   };
+
   const handleFeatureClick = (feature) => {
     setActiveFeature(feature);
     setSidebarOpen(true);
@@ -280,17 +289,6 @@ const TeacherDashboard = () => {
   const toggleProfile = () => {
     setProfileOpen(!profileOpen);
     if (sidebarOpen) setSidebarOpen(false);
-  };
-
-  const toggleTheme = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    }
-    setDarkMode(!darkMode);
   };
 
   const handleLogout = () => {
@@ -316,7 +314,7 @@ const TeacherDashboard = () => {
     if (error) {
       return (
         <div className="w-full max-w-6xl text-center py-20 bg-red-50 p-6 rounded-xl border border-red-300">
-          <p className="text-xl font-bold text-red-600">Data Error! 🚨</p>
+          <p className="text-xl font-bold text-red-600">Data Error!</p>
           <p className="text-gray-700 mt-2">{error}</p>
           <button 
             onClick={fetchTeacherData}
@@ -339,79 +337,321 @@ const TeacherDashboard = () => {
                  allStudents={dashboardData.allStudents}
                  allClasses={dashboardData.allClasses}
                />;
+      case 'classes':
+      case 'marks':
+        // For classes and marks, show basic placeholder with 2nd code structure
+        return (
+          <div className="w-full max-w-6xl mx-auto pt-8">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {activeFeature === 'classes' ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    )}
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {activeFeature === 'classes' ? 'Your Classes' : 'Marks Management'}
+                </h2>
+                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                  {activeFeature === 'classes' 
+                    ? 'Manage all your courses and class schedules.' 
+                    : 'Upload and manage student marks.'}
+                </p>
+              </div>
+              <div className="text-center py-8 text-gray-500">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                <p>Feature coming soon...</p>
+              </div>
+            </div>
+          </div>
+        );
       default:
         return <WelcomePage onFeatureClick={handleFeatureClick} teacherData={teacherData} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <TeacherNavbar 
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 min-h-screen">
+      <Navbar 
+        onHomeClick={handleHomeClick}
+        showHomeButton={activeFeature !== 'home'}
         teacherData={teacherData}
-        darkMode={darkMode}
-        toggleTheme={toggleTheme}
+        onLogout={handleLogout}
         profileOpen={profileOpen}
-        setProfileOpen={setProfileOpen}
-        handleLogout={handleLogout}
-        setSidebarOpen={setSidebarOpen}
+        toggleProfile={toggleProfile}
       />
       
-      <TeacherSidebar 
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        currentFeature={activeFeature}
-        handleFeatureClick={handleFeatureClick}
-        handleHomeClick={handleHomeClick}
+      <Sidebar 
+        isOpen={sidebarOpen}
+        activeFeature={activeFeature}
+        onFeatureClick={handleFeatureClick}
+        onClose={() => setSidebarOpen(false)}
       />
       
-      <main className="flex-1 lg:ml-64 p-6 pt-20 transition-all duration-300">
-        <div className="max-w-7xl mx-auto">
-          {/* Feature Header */}
-          {activeFeature !== 'home' && (
-            <div className="mb-6">
-              <button
-                onClick={handleHomeClick}
-                className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-4"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Dashboard
-              </button>
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                {activeFeature === 'classes' && 'Your Classes'}
-                {activeFeature === 'attendance' && 'Take Attendance'}
-                {activeFeature === 'students' && 'Students'}
-                {activeFeature === 'reports' && 'Reports'}
-              </h2>
-            </div>
-          )}
-
-          {/* Feature Content */}
-          {renderFeatureContent()}
-        </div>
+      <main className="flex items-center justify-center min-h-screen pt-24 px-6">
+        {renderFeatureContent()}
       </main>
     </div>
   );
 };
 
-// WelcomePage Component
-const WelcomePage = ({ onFeatureClick, teacherData }) => {
-  return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
-      <div className="text-center space-y-6 p-8">
-        <div className="mb-8">
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Welcome Back!
-          </h1>
-          <h2 className="text-3xl md:text-4xl font-semibold text-gray-800 dark:text-gray-100">
-            {teacherData?.name || 'Teacher'} 👨‍🏫
-          </h2>
+// EXACT COPY OF NAVBAR FROM 1ST CODE
+const Navbar = ({ onHomeClick, showHomeButton, teacherData, onLogout, profileOpen, toggleProfile }) => (
+  <nav className="flex justify-between items-center px-6 py-4 bg-white/95 backdrop-blur-md border-b border-gray-200/50 fixed top-0 left-0 right-0 z-50 shadow-lg">
+    <div className="flex items-center gap-4">
+      <button 
+        onClick={onHomeClick} 
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-all duration-200 ${showHomeButton ? '' : 'hidden'}`}
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        <span className="text-sm font-medium">Back</span>
+      </button>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
         </div>
-        
-        <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Your teaching management platform is ready
+        <div>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Teacher Dashboard
+          </h1>
+          {teacherData && (
+            <p className="text-sm text-gray-600">
+              Welcome, {teacherData.name} ({teacherData.email})
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+    
+    <div className="flex gap-3 items-center relative">
+      <button
+        onClick={onLogout}
+        className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+      >
+        Logout
+      </button>
+      
+      {/* Profile Button */}
+      <div className="relative">
+        <button 
+          onClick={toggleProfile}
+          className="profile-button w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-0.5 shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-sm font-bold text-blue-600">
+            {teacherData?.name?.charAt(0)?.toUpperCase() || 'T'}
+          </div>
+        </button>
+
+        {/* Profile Dropdown */}
+        {profileOpen && teacherData && (
+          <div className="profile-dropdown absolute right-0 top-12 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/50 z-50 overflow-hidden">
+            <div className="p-6">
+              {/* Profile Header */}
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 mx-auto mb-4">
+                  <img 
+                    src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" 
+                    className="w-full h-full rounded-full bg-white object-cover" 
+                    alt="profile" 
+                  />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">{teacherData.name}</h2>
+                <p className="text-gray-600">{teacherData.email}</p>
+                <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mt-2">
+                  {teacherData.teacherId}
+                </div>
+              </div>
+{/* Profile Details */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Department</label>
+                    <p className="text-sm text-gray-800">{teacherData.department}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Designation</label>
+                    <p className="text-sm text-gray-800">{teacherData.designation}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Specialization</label>
+                  <p className="text-sm text-gray-800">{teacherData.specialization}</p>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Office</label>
+                  <p className="text-sm text-gray-800">{teacherData.office}</p>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Office Hours</label>
+                  <p className="text-sm text-gray-800">{teacherData.officeHours}</p>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Phone</label>
+                  <p className="text-sm text-gray-800">{teacherData.phone}</p>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Joined</label>
+                  <p className="text-sm text-gray-800">{teacherData.joinDate}</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 mt-6">
+                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
+                  Edit Profile
+                </button>
+                <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all text-sm font-medium">
+                  Settings
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </nav>
+);
+
+// EXACT COPY OF SIDEBAR FROM 1ST CODE
+const Sidebar = ({ isOpen, activeFeature, onFeatureClick, onClose }) => {
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar && !sidebar.contains(e.target) && !e.target.closest('.feature-btn')) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [onClose]);
+
+  const features = [
+    { key: 'classes', label: 'Your Classes', color: 'from-emerald-400 to-emerald-600', icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+      </svg>
+    )},
+    { key: 'attendance', label: 'Take Attendance', color: 'from-pink-400 to-rose-600', icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+      </svg>
+    )},
+    { key: 'students', label: 'Students', color: 'from-orange-400 to-red-600', icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+      </svg>
+    )},
+    { key: 'marks', label: 'Marks Management', color: 'from-indigo-400 to-blue-600', icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      </svg>
+    )}
+  ];
+
+  return (
+    <aside 
+      id="sidebar"
+      className={`fixed left-0 top-16 h-full w-80 bg-white/95 backdrop-blur-md border-r border-gray-200/50 p-6 transform transition-transform duration-300 z-40 shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+    >
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3">Navigation</h2>
+        <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+      </div>
+      <ul className="space-y-3">
+        {features.map((item) => (
+          <li key={item.key}>
+            <button 
+              className={`w-full text-left flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 feature-btn group ${activeFeature === item.key ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+              onClick={() => onFeatureClick(item.key)}
+            >
+              <div className={`w-8 h-8 bg-gradient-to-br ${item.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-all duration-200`}>
+                {item.icon}
+              </div>
+              <span className="font-medium">{item.label}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+};
+
+// EXACT COPY OF WELCOME PAGE FROM 1ST CODE
+const WelcomePage = ({ onFeatureClick, teacherData }) => {
+  const features = [
+    { key: 'classes', label: 'Your Classes', description: 'Manage all your courses and class schedules', color: 'from-emerald-400 to-emerald-600', icon: (
+      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+      </svg>
+    )},
+    { key: 'attendance', label: 'Take Attendance', description: 'Generate QR for attendance tracking', color: 'from-pink-400 to-rose-600', icon: (
+      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+      </svg>
+    )},
+    { key: 'students', label: 'Students', description: 'Check the progress of your every student', color: 'from-orange-400 to-red-600', icon: (
+      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+      </svg>
+    )},
+    { key: 'marks', label: 'Marks Management', description: 'Upload and manage student marks', color: 'from-indigo-400 to-blue-600', icon: (
+      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      </svg>
+    )}
+  ];
+
+  return (
+    <div className="w-full max-w-6xl">
+      <div className="text-center mb-12">
+        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl mx-auto mb-6">
+          <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+          Welcome back, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{teacherData?.name || 'Teacher'}</span>
+        </h1>
+        <p className="text-gray-600 text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed">
+          Your personalized teaching management platform. Manage your classes, track student progress, and streamline your workflow.
         </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {features.map((item) => (
+          <div 
+            key={item.key}
+            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer border border-gray-200/50 feature-btn group"
+            onClick={() => onFeatureClick(item.key)}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-12 h-12 bg-gradient-to-br ${item.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                {item.icon}
+              </div>
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">{item.label}</h3>
+            <p className="text-sm text-gray-600">{item.description}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
