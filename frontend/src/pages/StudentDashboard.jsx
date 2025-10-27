@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import StudentAttendance from '../components/student/StudentAttendance';
 import StudentGrades from '../components/student/StudentGrades';
+import StudentCourses from '../components/student/StudentCourses';
 
 const StudentDashboard = () => {
   const [activeFeature, setActiveFeature] = useState('home');
@@ -161,8 +162,9 @@ const StudentDashboard = () => {
       case 'grades':
         return <StudentGrades grades={dashboardData.grades} courses={dashboardData.courses} loading={loading} error={error} />;
       case 'courses':
+        return <StudentCourses courses={dashboardData.courses} loading={loading} error={error} />;
       case 'assignments':
-        // For courses and assignments, show basic placeholder with 2nd code structure
+        // For assignments, show placeholder
         return (
           <div className="w-full max-w-6xl mx-auto pt-8">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50">

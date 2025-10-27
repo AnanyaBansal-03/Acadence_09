@@ -3,6 +3,8 @@ import { supabase } from "../lib/supabaseClient";
 import { useNavigate } from 'react-router-dom';
 import TeacherAttendance from '../components/teacher/TeacherAttendance';
 import TeacherStudents from '../components/teacher/TeacherStudents';
+import TeacherClasses from '../components/teacher/TeacherClasses';
+import TeacherMarks from '../components/teacher/TeacherMarks';
 
 const TeacherDashboard = () => {
   const [activeFeature, setActiveFeature] = useState('home');
@@ -338,39 +340,15 @@ const TeacherDashboard = () => {
                  allClasses={dashboardData.allClasses}
                />;
       case 'classes':
+        return <TeacherClasses 
+                 allClasses={dashboardData.allClasses}
+                 teacherName={teacherData?.name}
+               />;
       case 'marks':
-        // For classes and marks, show basic placeholder with 2nd code structure
-        return (
-          <div className="w-full max-w-6xl mx-auto pt-8">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {activeFeature === 'classes' ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                    )}
-                  </svg>
-                </div>
-                <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {activeFeature === 'classes' ? 'Your Classes' : 'Marks Management'}
-                </h2>
-                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                  {activeFeature === 'classes' 
-                    ? 'Manage all your courses and class schedules.' 
-                    : 'Upload and manage student marks.'}
-                </p>
-              </div>
-              <div className="text-center py-8 text-gray-500">
-                <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                <p>Feature coming soon...</p>
-              </div>
-            </div>
-          </div>
-        );
+        return <TeacherMarks 
+                 allClasses={dashboardData.allClasses}
+                 teacherName={teacherData?.name}
+               />;
       default:
         return <WelcomePage onFeatureClick={handleFeatureClick} teacherData={teacherData} />;
     }
