@@ -6,6 +6,9 @@ export default function AuthCard() {
   const [isSignup, setIsSignup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
   const navigate = useNavigate();
 
   // Shared form states
@@ -32,6 +35,7 @@ export default function AuthCard() {
     e.preventDefault();
     setLoading(true);
     setErr("");
+    setShowResendVerification(false);
 
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", loginData);
@@ -46,9 +50,32 @@ export default function AuthCard() {
       else if (res.data.role === "student") navigate("/student");
       else navigate("/unauthorized");
     } catch (error) {
-      setErr(error.response?.data?.message || "Error logging in");
+      const errorMessage = error.response?.data?.message || "Error logging in";
+      setErr(errorMessage);
+      
+      // Show resend verification option if email not verified
+      if (error.response?.data?.emailNotVerified) {
+        setShowResendVerification(true);
+        setResendEmail(loginData.email);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Resend verification email handler
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/resend-verification", {
+        email: resendEmail
+      });
+      alert(res.data.message);
+      setShowResendVerification(false);
+    } catch (error) {
+      alert(error.response?.data?.message || "Error sending verification email");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -127,7 +154,29 @@ export default function AuthCard() {
                 required
                 className="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500"
               />
-              {err && <p className="text-red-500 text-center">{err}</p>}
+              
+              {err && (
+                <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-xl text-center">
+                  {err}
+                </div>
+              )}
+
+              {showResendVerification && (
+                <div className="bg-yellow-50 border border-yellow-300 px-4 py-3 rounded-xl">
+                  <p className="text-yellow-800 text-sm mb-2">
+                    Email not verified. Please check your inbox for the verification link.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resendLoading}
+                    className="text-blue-600 hover:text-blue-800 font-semibold text-sm underline disabled:opacity-50"
+                  >
+                    {resendLoading ? "Sending..." : "Resend Verification Email"}
+                  </button>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}

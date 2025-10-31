@@ -5,27 +5,70 @@ const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const supabase = require("../db");
 
-// LOGIN - with debug logs
+// LOGIN - Check Supabase Auth email verification
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
+
   try {
+    // First, try to sign in with Supabase Auth to check email verification
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase().trim(),
+      password: password
+    });
+
+    if (authError) {
+      // Check if it's an email not confirmed error
+      if (authError.message.includes('Email not confirmed')) {
+        return res.status(403).json({ 
+          message: "Please verify your email before logging in. Check your inbox for the verification link.",
+          emailNotVerified: true,
+          email: email.toLowerCase().trim()
+        });
+      }
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if email is verified in Supabase Auth
+    if (!authData.user.email_confirmed_at) {
+      return res.status(403).json({ 
+        message: "Please verify your email before logging in. Check your inbox for the verification link.",
+        emailNotVerified: true,
+        email: email.toLowerCase().trim()
+      });
+    }
+
+    // Get user data from our users table
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, email, password, name, role')
-      .eq('email', email)
+      .select('id, email, name, role')
+      .eq('email', email.toLowerCase().trim())
       .single();
 
     if (error || !user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "User not found" });
     }
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    // Update email_verified in our table if it's not already
+    if (!user.email_verified) {
+      await supabase
+        .from('users')
+        .update({ email_verified: true })
+        .eq('id', user.id);
     }
 
-    // Include role, id, email, and name in the response
+    // Generate JWT token
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    
     res.json({ 
       token, 
       role: user.role, 
@@ -34,11 +77,12 @@ router.post("/login", async (req, res) => {
       email: user.email
     });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: "Error logging in" });
   }
 });
 
-// SIGNUP
+// SIGNUP - Using Supabase Auth for email verification
 router.post("/signup", async (req, res) => {
   const { name, email, password, role } = req.body;
 
@@ -46,16 +90,48 @@ router.post("/signup", async (req, res) => {
     return res.status(400).json({ message: "All fields are required" });
   }
 
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
+
   // Validate role
   if (!['student', 'teacher'].includes(role)) {
     return res.status(400).json({ message: "Role must be 'student' or 'teacher'" });
   }
 
+  // Validate password strength
+  if (password.length < 6) {
+    return res.status(400).json({ message: "Password must be at least 6 characters long" });
+  }
+
   try {
-    // Hash password
+    // Use Supabase Auth to create user with email verification
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: email.toLowerCase().trim(),
+      password: password,
+      options: {
+        data: {
+          name: name.trim(),
+          role: role.toLowerCase()
+        },
+        emailRedirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`
+      }
+    });
+
+    if (authError) {
+      console.error("Supabase auth signup error:", authError);
+      if (authError.message.includes('already registered')) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      return res.status(500).json({ message: authError.message || "Error creating account" });
+    }
+
+    // Hash password for our users table
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Insert user into Supabase
+    // Insert into our users table (without id - let it auto-generate)
     const { data, error } = await supabase
       .from('users')
       .insert([
@@ -63,43 +139,61 @@ router.post("/signup", async (req, res) => {
           name: name.trim(),
           email: email.toLowerCase().trim(),
           password: hashedPassword,
-          role: role.toLowerCase()
+          role: role.toLowerCase(),
+          email_verified: false // Will be updated when user clicks verification link
         }
       ])
       .select('id, name, email, role, created_at');
 
     if (error) {
-      if (error.code === '23505') { // Unique violation (email already exists)
-        return res.status(400).json({ message: "Email already exists" });
-      }
-      console.error("Signup error:", error);
+      console.error("Database insert error:", error);
+      // Try to clean up auth user if database insert fails
+      await supabase.auth.admin.deleteUser(authData.user.id);
       return res.status(500).json({ message: "Error creating account" });
     }
 
-    // Generate token for immediate login after signup
-    const token = jwt.sign(
-      { 
-        id: data[0].id, 
-        role: data[0].role, 
-        name: data[0].name,
-        email: data[0].email 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
     res.status(201).json({ 
-      message: "Account created successfully",
-      token,
-      role: data[0].role,
-      name: data[0].name,
+      message: "Account created successfully! Please check your email to verify your account before logging in.",
       email: data[0].email,
-      id: data[0].id
+      requiresVerification: true
     });
 
   } catch (err) {
     console.error("Signup error:", err);
     res.status(500).json({ message: "Server error during signup" });
+  }
+});
+
+// RESEND VERIFICATION EMAIL - Using Supabase Auth
+router.post("/resend-verification", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    // Resend confirmation email using Supabase Auth
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.toLowerCase().trim(),
+      options: {
+        emailRedirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`
+      }
+    });
+
+    if (error) {
+      console.error("Resend verification error:", error);
+      return res.status(500).json({ message: "Error sending verification email" });
+    }
+
+    res.status(200).json({ 
+      message: "Verification email sent! Please check your inbox." 
+    });
+
+  } catch (err) {
+    console.error("Resend verification error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

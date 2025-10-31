@@ -10,6 +10,7 @@ function Signup() {
     role: "",
   });
   const [err, setErr] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -19,15 +20,22 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErr("");
+    setSuccessMessage("");
 
     try {
       const res = await axios.post(
         "http://localhost:5000/api/auth/signup",
         formData
       );
-      alert(res.data.message);
+      
+      // Show success message
+      setSuccessMessage(res.data.message);
       setFormData({ name: "", email: "", password: "", role: "" });
-      navigate("/login");
+      
+      // Redirect to login after 5 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 5000);
     } catch (error) {
       setErr(error.response?.data?.message || "Error signing up");
     }
@@ -92,11 +100,23 @@ function Signup() {
             <option value="teacher">Teacher</option>
             </select>
 
-            {err && <p className="text-red-500 text-center">{err}</p>}
+            {err && (
+              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-xl text-center">
+                {err}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-xl text-center">
+                <p className="font-semibold mb-1">✓ {successMessage}</p>
+                <p className="text-sm">Redirecting to login page in 5 seconds...</p>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="bg-blue-700 text-white font-bold p-3 rounded-xl w-full hover:bg-blue-800 transition"
+              disabled={successMessage !== ""}
+              className="bg-blue-700 text-white font-bold p-3 rounded-xl w-full hover:bg-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Sign Up
             </button>
