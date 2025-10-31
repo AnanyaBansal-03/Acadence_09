@@ -6,7 +6,12 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
   const [marksData, setMarksData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [bulkMarks, setBulkMarks] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
 
   const handleClassChange = async (classId) => {
     setSelectedClass(classId);
@@ -20,34 +25,36 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
   const fetchMarksForClass = async (classId) => {
     setLoading(true);
     try {
-      // Fetch enrollments for the class
+      // Fetch enrollments for the class with marks
       const { data: enrollments, error: enrollError } = await supabase
         .from('enrollments')
         .select(`
           student_id,
-          users!enrollments_student_id_fkey (id, name, email)
+          marks,
+          users:student_id (id, name, email)
         `)
         .eq('class_id', parseInt(classId));
 
-      if (enrollError) throw enrollError;
+      if (enrollError) {
+        console.error('Error fetching enrollments:', enrollError);
+        throw enrollError;
+      }
 
-      // Fetch existing marks
-      const { data: marks, error: marksError } = await supabase
-        .from('marks')
-        .select('*')
-        .eq('class_id', parseInt(classId));
-
-      if (marksError && marksError.code !== 'PGRST116') throw marksError;
+      console.log('Fetched enrollments:', enrollments);
 
       // Combine student and marks data
       const combined = enrollments?.map(enrollment => {
-        const mark = (marks || []).find(m => m.student_id === enrollment.student_id);
+        const email = enrollment.users?.email || '';
+        const name = enrollment.users?.name || (email ? email.split('@')[0] : 'Unknown');
+        const marksValue = enrollment.marks !== null && enrollment.marks !== undefined ? enrollment.marks : '';
+        const gradeValue = marksValue !== '' ? calculateGrade(marksValue) : '';
+        
         return {
           student_id: enrollment.student_id,
-          student_name: enrollment.users?.name || 'Unknown',
-          student_email: enrollment.users?.email || '',
-          marks: mark?.marks || '',
-          grade: mark?.grade || ''
+          student_name: name,
+          student_email: email,
+          marks: marksValue,
+          grade: gradeValue
         };
       }) || [];
 
@@ -78,34 +85,6 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
     return 'F';
   };
 
-  const handleBulkUpload = async () => {
-    if (!selectedClass || !bulkMarks.trim()) {
-      alert('Please select a class and enter marks data');
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const lines = bulkMarks.trim().split('\n');
-      const updatePromises = lines.map(line => {
-        const [email, marks] = line.split(',').map(s => s.trim());
-        const student = marksData.find(m => m.student_email === email);
-        if (student) {
-          handleMarkChange(student.student_id, marks);
-        }
-      });
-
-      await Promise.all(updatePromises);
-      setBulkMarks('');
-      alert('Marks updated successfully');
-    } catch (err) {
-      console.error('Error uploading marks:', err);
-      alert('Error uploading marks: ' + err.message);
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSaveMarks = async () => {
     if (!selectedClass) {
       alert('Please select a class');
@@ -114,30 +93,52 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
 
     setUploading(true);
     try {
-      // Save marks to database
-      const marksToInsert = marksData
-        .filter(item => item.marks)
+      // Prepare marks data for upload
+      const marksToUpload = marksData
+        .filter(item => item.marks && item.marks !== '')
         .map(item => ({
-          class_id: parseInt(selectedClass),
           student_id: item.student_id,
-          marks: parseFloat(item.marks),
-          grade: item.grade
+          marks: parseFloat(item.marks)
         }));
 
-      if (marksToInsert.length === 0) {
+      if (marksToUpload.length === 0) {
         alert('No marks to save');
         setUploading(false);
         return;
       }
 
-      // Try to upsert marks
-      const { error } = await supabase
-        .from('marks')
-        .upsert(marksToInsert, { onConflict: 'class_id,student_id' });
+      // Call backend API to upload marks
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/teacher/upload-marks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          classId: parseInt(selectedClass),
+          marksData: marksToUpload
+        })
+      });
 
-      if (error) throw error;
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        throw new Error('Server returned an invalid response. Please check if the backend is running.');
+      }
 
-      alert('✅ Marks saved successfully');
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to upload marks');
+      }
+
+      showSuccess(`✅ ${result.uploaded} marks uploaded successfully for ${result.className}!`);
+      
+      // Refresh marks data
+      await fetchMarksForClass(selectedClass);
     } catch (err) {
       console.error('Error saving marks:', err);
       alert('Error saving marks: ' + err.message);
@@ -149,6 +150,16 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
   return (
     <div className="w-full max-w-6xl mx-auto pt-8">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 flex items-center gap-3 animate-fade-in">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            {successMessage}
+          </div>
+        )}
+
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -185,28 +196,6 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
 
         {selectedClass && (
           <>
-            {/* Bulk Upload Section */}
-            <div className="mb-8 bg-blue-50 rounded-xl p-6 border border-blue-200">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Bulk Upload Marks</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Format: student_email,marks (one per line)
-              </p>
-              <textarea
-                placeholder="student1@example.com,85&#10;student2@example.com,92"
-                value={bulkMarks}
-                onChange={(e) => setBulkMarks(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4 font-mono text-sm"
-                rows="4"
-              />
-              <button
-                onClick={handleBulkUpload}
-                disabled={uploading}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
-              >
-                {uploading ? 'Uploading...' : 'Upload Bulk Marks'}
-              </button>
-            </div>
-
             {/* Marks Table */}
             <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50 mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -218,7 +207,7 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                     <tr className="text-left text-gray-500 border-b border-gray-200">
                       <th className="pb-3 px-4">Student Name</th>
                       <th className="pb-3 px-4">Email</th>
-                      <th className="pb-3 px-4">Marks</th>
+                      <th className="pb-3 px-4">Marks (0-100)</th>
                       <th className="pb-3 px-4">Grade</th>
                     </tr>
                   </thead>
@@ -229,16 +218,32 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                           <td className="py-3 px-4 text-gray-800 font-medium">{item.student_name}</td>
                           <td className="py-3 px-4 text-gray-600">{item.student_email}</td>
                           <td className="py-3 px-4">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
+                            <select
                               value={item.marks}
                               onChange={(e) => handleMarkChange(item.student_id, e.target.value)}
-                              className="w-20 px-2 py-1 border border-gray-300 rounded"
-                            />
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                            >
+                              <option value="">Select marks...</option>
+                              {Array.from({ length: 101 }, (_, i) => i).map(mark => (
+                                <option key={mark} value={mark}>{mark}</option>
+                              ))}
+                            </select>
                           </td>
-                          <td className="py-3 px-4 font-semibold text-blue-600">{item.grade || '-'}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                              item.grade === 'A+' || item.grade === 'A' 
+                                ? 'bg-green-100 text-green-700' 
+                                : item.grade === 'B+' || item.grade === 'B'
+                                ? 'bg-blue-100 text-blue-700'
+                                : item.grade === 'C'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : item.grade === 'F'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {item.grade || '-'}
+                            </span>
+                          </td>
                         </tr>
                       ))
                     ) : (
@@ -259,9 +264,21 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                 <button
                   onClick={handleSaveMarks}
                   disabled={uploading}
-                  className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:bg-gray-400 font-medium"
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:bg-gray-400 font-medium shadow-lg hover:shadow-xl transition-all"
                 >
-                  {uploading ? 'Saving...' : '💾 Save Marks'}
+                  {uploading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Saving...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save All Marks
+                    </span>
+                  )}
                 </button>
               </div>
             )}

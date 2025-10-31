@@ -54,10 +54,12 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
       const records = enrollments?.map(enrollment => {
         const studentId = enrollment.users?.id || enrollment.student_id;
         const attendanceRecord = attendanceData?.find(a => a.student_id === studentId);
+        const email = enrollment.users?.email || '';
+        const name = enrollment.users?.name || (email ? email.split('@')[0] : 'Unknown');
         
         return {
           id: studentId,
-          studentName: enrollment.users?.name || 'Unknown',
+          studentName: name,
           status: attendanceRecord?.status || 'absent',
           time: attendanceRecord?.created_at ? new Date(attendanceRecord.created_at).toLocaleTimeString() : '-',
           attendanceId: attendanceRecord?.id

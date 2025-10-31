@@ -239,4 +239,89 @@ router.delete("/users/:id", verifyAdmin, async (req, res) => {
   }
 });
 
+// GET all marks with filters
+router.get("/marks", verifyAdmin, async (req, res) => {
+  try {
+    const { classId, studentId } = req.query;
+    
+    let query = supabase
+      .from("enrollments")
+      .select(`
+        marks,
+        student_id,
+        class_id,
+        users!enrollments_student_id_fkey (id, name, email),
+        classes (id, name, day_of_week, schedule_time)
+      `);
+
+    if (classId) {
+      query = query.eq("class_id", parseInt(classId));
+    }
+    
+    if (studentId) {
+      query = query.eq("student_id", parseInt(studentId));
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    
+    // Filter out entries without marks (optional)
+    const marksData = (data || []).map(enrollment => ({
+      student_id: enrollment.student_id,
+      class_id: enrollment.class_id,
+      marks: enrollment.marks,
+      users: enrollment.users,
+      classes: enrollment.classes
+    }));
+    
+    res.json(marksData);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching marks", error: err.message });
+  }
+});
+
+// UPDATE marks (admin can override teacher marks)
+router.put("/marks/:classId/:studentId", verifyAdmin, async (req, res) => {
+  try {
+    const { classId, studentId } = req.params;
+    const { marks } = req.body;
+
+    if (marks === undefined || marks < 0 || marks > 100) {
+      return res.status(400).json({ message: "Marks must be between 0-100" });
+    }
+
+    const { data, error } = await supabase
+      .from("enrollments")
+      .update({ marks: parseFloat(marks) })
+      .eq("class_id", parseInt(classId))
+      .eq("student_id", parseInt(studentId))
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ message: "Marks updated successfully", data });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating marks", error: err.message });
+  }
+});
+
+// DELETE marks (set to NULL)
+router.delete("/marks/:classId/:studentId", verifyAdmin, async (req, res) => {
+  try {
+    const { classId, studentId } = req.params;
+
+    const { error } = await supabase
+      .from("enrollments")
+      .update({ marks: null })
+      .eq("class_id", parseInt(classId))
+      .eq("student_id", parseInt(studentId));
+
+    if (error) throw error;
+    res.json({ message: "Marks deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting marks", error: err.message });
+  }
+});
+
 module.exports = router;

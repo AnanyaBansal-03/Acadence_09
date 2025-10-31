@@ -174,11 +174,13 @@ router.get("/attendance-report/:classId/:date", verifyTeacher, async (req, res) 
     const report = enrollments.map(enrollment => {
       const studentId = enrollment.users?.id || enrollment.student_id;
       const attendanceRecord = attendance?.find(a => a.student_id === studentId);
+      const email = enrollment.users?.email || '';
+      const name = enrollment.users?.name || (email ? email.split('@')[0] : 'Unknown');
       
       return {
         student_id: studentId,
-        student_name: enrollment.users?.name || 'Unknown',
-        student_email: enrollment.users?.email || '',
+        student_name: name,
+        student_email: email,
         status: attendanceRecord?.status || 'absent',
         marked_at: attendanceRecord?.created_at || null
       };
@@ -199,6 +201,141 @@ router.get("/attendance-report/:classId/:date", verifyTeacher, async (req, res) 
     console.error("Error fetching attendance report:", err);
     res.status(500).json({
       message: "Error fetching attendance report",
+      error: err.message
+    });
+  }
+});
+
+// Upload/Update marks for students in a class
+router.post("/upload-marks", verifyTeacher, async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const { classId, marksData } = req.body;
+
+    if (!classId || !marksData || !Array.isArray(marksData)) {
+      return res.status(400).json({ message: "classId and marksData array are required" });
+    }
+
+    // Verify this teacher owns this class
+    const { data: classData, error: classError } = await supabase
+      .from("classes")
+      .select("id, teacher_id, name")
+      .eq("id", classId)
+      .single();
+
+    if (classError || !classData || classData.teacher_id !== teacherId) {
+      return res.status(403).json({ message: "You don't have permission to upload marks for this class" });
+    }
+
+    // Validate marks data
+    for (const item of marksData) {
+      if (!item.student_id || item.marks === undefined) {
+        return res.status(400).json({ message: "Each entry must have student_id and marks" });
+      }
+      if (item.marks < 0 || item.marks > 100) {
+        return res.status(400).json({ message: "Marks must be between 0 and 100" });
+      }
+    }
+
+    // Verify all students are enrolled in this class
+    const studentIds = marksData.map(m => m.student_id);
+    const { data: enrollments, error: enrollError } = await supabase
+      .from("enrollments")
+      .select("student_id")
+      .eq("class_id", classId)
+      .in("student_id", studentIds);
+
+    if (enrollError) throw enrollError;
+
+    const enrolledStudentIds = new Set(enrollments.map(e => e.student_id));
+    const invalidStudents = studentIds.filter(id => !enrolledStudentIds.has(id));
+    
+    if (invalidStudents.length > 0) {
+      return res.status(400).json({ 
+        message: "Some students are not enrolled in this class",
+        invalidStudents 
+      });
+    }
+
+    // Update marks in enrollments table
+    let updated = 0;
+    const errors = [];
+
+    for (const item of marksData) {
+      const { data, error } = await supabase
+        .from("enrollments")
+        .update({ marks: parseFloat(item.marks) })
+        .eq("class_id", classId)
+        .eq("student_id", item.student_id)
+        .select();
+
+      if (error) {
+        errors.push({ student_id: item.student_id, error: error.message });
+      } else if (data && data.length > 0) {
+        updated++;
+      }
+    }
+
+    if (errors.length > 0) {
+      return res.status(500).json({
+        message: "Some marks failed to update",
+        updated,
+        errors
+      });
+    }
+
+    res.json({
+      message: "Marks uploaded successfully",
+      uploaded: updated,
+      className: classData.name
+    });
+  } catch (err) {
+    console.error("Error uploading marks:", err);
+    res.status(500).json({
+      message: "Error uploading marks",
+      error: err.message
+    });
+  }
+});
+
+// Get marks for a specific class
+router.get("/marks/:classId", verifyTeacher, async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const { classId } = req.params;
+
+    // Verify this teacher owns this class
+    const { data: classData, error: classError } = await supabase
+      .from("classes")
+      .select("id, teacher_id, name")
+      .eq("id", classId)
+      .single();
+
+    if (classError || !classData || classData.teacher_id !== teacherId) {
+      return res.status(403).json({ message: "You don't have permission to view marks for this class" });
+    }
+
+    // Get all marks for this class with student details from enrollments
+    const { data: enrollments, error: marksError } = await supabase
+      .from("enrollments")
+      .select(`
+        marks,
+        student_id,
+        users!enrollments_student_id_fkey (id, name, email)
+      `)
+      .eq("class_id", classId)
+      .order("marks", { ascending: false });
+
+    if (marksError && marksError.code !== 'PGRST116') throw marksError;
+
+    res.json({
+      className: classData.name,
+      marks: enrollments || []
+    });
+  } catch (err) {
+    console.error("Error fetching marks:", err);
+    res.status(500).json({
+      message: "Error fetching marks",
       error: err.message
     });
   }

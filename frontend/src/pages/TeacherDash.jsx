@@ -131,12 +131,17 @@ const TeacherDashboard = () => {
             students = [];
           } else {
             // Process students data
-            students = enrollments?.map(enrollment => ({
-              id: enrollment.users?.id || enrollment.student_id,
-              name: enrollment.users?.name || 'Student Name',
-              email: enrollment.users?.email || 'student@example.com',
-              classId: enrollment.class_id
-            })) || [];
+            students = enrollments?.map(enrollment => {
+              const email = enrollment.users?.email || 'student@example.com';
+              const name = enrollment.users?.name || (email !== 'student@example.com' ? email.split('@')[0] : 'Student Name');
+              
+              return {
+                id: enrollment.users?.id || enrollment.student_id,
+                name: name,
+                email: email,
+                classId: enrollment.class_id
+              };
+            }) || [];
           }
         }
 

@@ -128,4 +128,40 @@ router.get("/attendance", verifyToken, async (req, res) => {
   }
 });
 
+// Get student's marks/grades
+router.get("/marks", verifyToken, async (req, res) => {
+  try {
+    const studentId = req.user.id;
+
+    // Get all enrollments with marks for this student
+    const { data: enrollments, error: enrollmentsError } = await supabase
+      .from("enrollments")
+      .select(`
+        marks,
+        class_id,
+        classes (id, name, day_of_week, schedule_time)
+      `)
+      .eq("student_id", studentId);
+
+    if (enrollmentsError) throw enrollmentsError;
+
+    // Transform to match expected format
+    const marksData = (enrollments || [])
+      .filter(e => e.marks !== null && e.marks !== undefined)
+      .map(enrollment => ({
+        class_id: enrollment.class_id,
+        marks: enrollment.marks,
+        classes: enrollment.classes
+      }));
+
+    res.json(marksData);
+  } catch (err) {
+    console.error("Error fetching marks:", err);
+    res.status(500).json({
+      message: "Error fetching marks",
+      error: err.message
+    });
+  }
+});
+
 module.exports = router;

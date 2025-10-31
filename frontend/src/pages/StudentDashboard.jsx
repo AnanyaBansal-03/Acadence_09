@@ -99,6 +99,41 @@ const StudentDashboard = () => {
         }
       }
 
+      // Fetch marks/grades from backend API
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/student/marks', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const marksData = await response.json();
+          // Transform marks data to match expected format and calculate grade
+          grades = marksData.map(mark => {
+            const score = mark.marks;
+            let grade = '';
+            if (score >= 90) grade = 'A';
+            else if (score >= 80) grade = 'B';
+            else if (score >= 70) grade = 'C';
+            else if (score >= 60) grade = 'D';
+            else if (score < 60) grade = 'F';
+            
+            return {
+              class_id: mark.class_id,
+              assignment_name: mark.classes?.name || 'Overall Grade',
+              score: score,
+              grade: grade,
+              graded_date: mark.uploaded_at
+            };
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching marks:', err);
+        grades = [];
+      }
+
       setDashboardData({ courses, attendance, assignments, grades });
       setLoading(false);
 
