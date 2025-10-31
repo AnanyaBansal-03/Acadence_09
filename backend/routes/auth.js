@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const supabase = require("../db");
 
-// LOGIN - Check Supabase Auth email verification
+// LOGIN - Support both Supabase Auth and direct database users (admins)
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   
@@ -20,7 +20,38 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    // First, try to sign in with Supabase Auth to check email verification
+    // Get user from database first
+    const { data: user, error: dbError } = await supabase
+      .from('users')
+      .select('id, email, password, name, role, email_verified')
+      .eq('email', email.toLowerCase().trim())
+      .single();
+
+    if (dbError || !user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if user is admin or has email_verified = true (bypass Supabase Auth for these)
+    if (user.role === 'admin' || user.email_verified === true) {
+      // Direct password check for admins and verified users
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
+      
+      return res.json({ 
+        token, 
+        role: user.role, 
+        name: user.name,
+        id: user.id,
+        email: user.email
+      });
+    }
+
+    // For non-admin users without verified email, check Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: email.toLowerCase().trim(),
       password: password
@@ -47,24 +78,11 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Get user data from our users table
-    const { data: user, error } = await supabase
+    // Update email_verified in our table
+    await supabase
       .from('users')
-      .select('id, email, name, role')
-      .eq('email', email.toLowerCase().trim())
-      .single();
-
-    if (error || !user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    // Update email_verified in our table if it's not already
-    if (!user.email_verified) {
-      await supabase
-        .from('users')
-        .update({ email_verified: true })
-        .eq('id', user.id);
-    }
+      .update({ email_verified: true })
+      .eq('id', user.id);
 
     // Generate JWT token
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
