@@ -3,10 +3,18 @@ import { supabase } from '../../lib/supabaseClient';
 
 const TeacherMarks = ({ allClasses, teacherName }) => {
   const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSection, setSelectedSection] = useState('st1');
   const [marksData, setMarksData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  const sections = [
+    { value: 'st1', label: 'ST1 (Sessional Test 1)', column: 'st1_marks' },
+    { value: 'st2', label: 'ST2 (Sessional Test 2)', column: 'st2_marks' },
+    { value: 'evaluation', label: 'Evaluation', column: 'evaluation_marks' },
+    { value: 'end_term', label: 'End Term', column: 'end_term_marks' }
+  ];
 
   const showSuccess = (message) => {
     setSuccessMessage(message);
@@ -16,21 +24,34 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
   const handleClassChange = async (classId) => {
     setSelectedClass(classId);
     if (classId) {
-      fetchMarksForClass(classId);
+      fetchMarksForClass(classId, selectedSection);
     } else {
       setMarksData([]);
     }
   };
 
-  const fetchMarksForClass = async (classId) => {
+  const handleSectionChange = async (section) => {
+    setSelectedSection(section);
+    if (selectedClass) {
+      fetchMarksForClass(selectedClass, section);
+    }
+  };
+
+  const fetchMarksForClass = async (classId, section) => {
     setLoading(true);
     try {
-      // Fetch enrollments for the class with marks
+      const sectionObj = sections.find(s => s.value === section);
+      const columnName = sectionObj.column;
+
+      // Fetch enrollments for the class with all marks columns
       const { data: enrollments, error: enrollError } = await supabase
         .from('enrollments')
         .select(`
           student_id,
-          marks,
+          st1_marks,
+          st2_marks,
+          evaluation_marks,
+          end_term_marks,
           users:student_id (id, name, email)
         `)
         .eq('class_id', parseInt(classId));
@@ -40,13 +61,11 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
         throw enrollError;
       }
 
-      console.log('Fetched enrollments:', enrollments);
-
-      // Combine student and marks data
+      // Combine student and marks data for selected section
       const combined = enrollments?.map(enrollment => {
         const email = enrollment.users?.email || '';
         const name = enrollment.users?.name || (email ? email.split('@')[0] : 'Unknown');
-        const marksValue = enrollment.marks !== null && enrollment.marks !== undefined ? enrollment.marks : '';
+        const marksValue = enrollment[columnName] !== null && enrollment[columnName] !== undefined ? enrollment[columnName] : '';
         const gradeValue = marksValue !== '' ? calculateGrade(marksValue) : '';
         
         return {
@@ -91,8 +110,15 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
       return;
     }
 
+    if (!selectedSection) {
+      alert('Please select a section');
+      return;
+    }
+
     setUploading(true);
     try {
+      const sectionObj = sections.find(s => s.value === selectedSection);
+      
       // Prepare marks data for upload
       const marksToUpload = marksData
         .filter(item => item.marks && item.marks !== '')
@@ -117,6 +143,7 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
         },
         body: JSON.stringify({
           classId: parseInt(selectedClass),
+          section: selectedSection,
           marksData: marksToUpload
         })
       });
@@ -135,10 +162,10 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
         throw new Error(result.message || 'Failed to upload marks');
       }
 
-      showSuccess(`✅ ${result.uploaded} marks uploaded successfully for ${result.className}!`);
+      showSuccess(`✅ ${result.uploaded} ${sectionObj.label} marks uploaded successfully for ${result.className}!`);
       
       // Refresh marks data
-      await fetchMarksForClass(selectedClass);
+      await fetchMarksForClass(selectedClass, selectedSection);
     } catch (err) {
       console.error('Error saving marks:', err);
       alert('Error saving marks: ' + err.message);
@@ -194,13 +221,42 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
           </select>
         </div>
 
+        {/* Section Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Section (Exam Type)
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {sections.map(section => (
+              <button
+                key={section.value}
+                type="button"
+                onClick={() => handleSectionChange(section.value)}
+                className={`px-4 py-3 rounded-lg font-medium transition-all ${
+                  selectedSection === section.value
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {section.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {selectedClass && (
           <>
             {/* Marks Table */}
             <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50 mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Student Marks {loading && <span className="text-sm text-gray-500">(Loading...)</span>}
-              </h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {sections.find(s => s.value === selectedSection)?.label} Marks
+                  {loading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
+                </h3>
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                  {marksData.length} Students
+                </span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
