@@ -210,10 +210,23 @@ router.get("/attendance-report/:classId/:date", verifyTeacher, async (req, res) 
 router.post("/upload-marks", verifyTeacher, async (req, res) => {
   try {
     const teacherId = req.user.id;
-    const { classId, marksData } = req.body;
+    const { classId, section, marksData } = req.body;
 
-    if (!classId || !marksData || !Array.isArray(marksData)) {
-      return res.status(400).json({ message: "classId and marksData array are required" });
+    if (!classId || !section || !marksData || !Array.isArray(marksData)) {
+      return res.status(400).json({ message: "classId, section, and marksData array are required" });
+    }
+
+    // Map section to column name
+    const sectionColumns = {
+      'st1': 'st1_marks',
+      'st2': 'st2_marks',
+      'evaluation': 'evaluation_marks',
+      'end_term': 'end_term_marks'
+    };
+
+    const columnName = sectionColumns[section];
+    if (!columnName) {
+      return res.status(400).json({ message: "Invalid section. Must be: st1, st2, evaluation, or end_term" });
     }
 
     // Verify this teacher owns this class
@@ -257,14 +270,17 @@ router.post("/upload-marks", verifyTeacher, async (req, res) => {
       });
     }
 
-    // Update marks in enrollments table
+    // Update marks in enrollments table for the specific section
     let updated = 0;
     const errors = [];
 
     for (const item of marksData) {
+      const updateData = {};
+      updateData[columnName] = parseFloat(item.marks);
+
       const { data, error } = await supabase
         .from("enrollments")
-        .update({ marks: parseFloat(item.marks) })
+        .update(updateData)
         .eq("class_id", classId)
         .eq("student_id", item.student_id)
         .select();

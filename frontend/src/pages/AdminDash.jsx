@@ -7,6 +7,7 @@ import AdminClasses from '../components/admin/AdminClasses';
 import AdminEnrollments from '../components/admin/AdminEnrollments';
 import AdminGrades from '../components/admin/AdminGrades';
 import AdminAnalytics from '../components/admin/AdminAnalytics';
+import AdminGroups from '../components/admin/AdminGroups';
 
 const AdminNavbar = ({ adminData, darkMode, toggleTheme, profileOpen, setProfileOpen, handleLogout }) => {
   return (
@@ -205,6 +206,8 @@ const AdminDashboard = () => {
         return <AdminEnrollments initialEnrollments={dbData.enrollments} initialUsers={dbData.users} initialClasses={dbData.classes} onDataRefresh={fetchAdminData} />;
       case 'grades':
         return <AdminGrades initialEnrollments={dbData.enrollments} initialUsers={dbData.users} initialClasses={dbData.classes} onDataRefresh={fetchAdminData} />;
+      case 'groups':
+        return <AdminGroups initialUsers={dbData.users} initialClasses={dbData.classes} onDataRefresh={fetchAdminData} />;
       case 'analytics':
         return <AdminAnalytics users={dbData.users} classes={dbData.classes} enrollments={dbData.enrollments} attendance={dbData.attendance} />;
       default:

@@ -3,13 +3,27 @@ import React, { useState } from 'react';
 const StudentGrades = ({ grades = [], courses, loading, error }) => {
   const [selectedCourse, setSelectedCourse] = useState('all');
 
+  // Debug: Log the grades data
+  React.useEffect(() => {
+    console.log('StudentGrades - Received grades:', grades);
+    console.log('StudentGrades - Received courses:', courses);
+  }, [grades, courses]);
+
   // Get course name by ID
   const getCourseName = (classId) => {
     const course = courses.find(c => c.id === classId);
     return course?.name || 'Unknown Course';
   };
 
-  // Calculate grade statistics per course
+  // Calculate average for all mark sections
+  const calculateSectionAverage = (grades, section) => {
+    const validGrades = grades.filter(g => g[section] !== null && g[section] !== undefined);
+    if (validGrades.length === 0) return null;
+    const total = validGrades.reduce((sum, g) => sum + parseFloat(g[section]), 0);
+    return (total / validGrades.length).toFixed(2);
+  };
+
+  // Calculate grade statistics per course including all sections
   const calculateGradeStats = () => {
     const stats = {};
     
@@ -19,19 +33,28 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
         stats[course.id] = null;
         return;
       }
-      
-      const total = courseGrades.reduce((sum, g) => sum + (g.score || 0), 0);
-      const average = courseGrades.length > 0 ? Math.round(total / courseGrades.length) : 0;
-      const highest = Math.max(...courseGrades.map(g => g.score || 0));
-      const lowest = Math.min(...courseGrades.map(g => g.score || 0));
+
+      // Calculate averages for each section
+      const st1Avg = calculateSectionAverage(courseGrades, 'st1');
+      const st2Avg = calculateSectionAverage(courseGrades, 'st2');
+      const evalAvg = calculateSectionAverage(courseGrades, 'evaluation');
+      const endTermAvg = calculateSectionAverage(courseGrades, 'end_term');
+
+      // Calculate overall average from available sections
+      const availableAverages = [st1Avg, st2Avg, evalAvg, endTermAvg].filter(avg => avg !== null);
+      const overallAverage = availableAverages.length > 0
+        ? (availableAverages.reduce((sum, avg) => sum + parseFloat(avg), 0) / availableAverages.length).toFixed(2)
+        : 0;
       
       stats[course.id] = {
         courseName: course.name,
-        average,
-        highest,
-        lowest,
-        count: courseGrades.length,
-        letter: getLetterGrade(average)
+        st1: st1Avg,
+        st2: st2Avg,
+        evaluation: evalAvg,
+        end_term: endTermAvg,
+        average: parseFloat(overallAverage),
+        letter: getLetterGrade(overallAverage),
+        hasSections: availableAverages.length > 0
       };
     });
     
@@ -120,10 +143,10 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Current Grades by Course */}
+        {/* Current Grades by Course - Show All Sections */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
-            Current Grades
+            Current Grades by Section
           </h3>
           {courses.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">
@@ -133,7 +156,7 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
             <div className="space-y-4">
               {courses.map((course) => {
                 const stats = gradeStats[course.id];
-                if (!stats) {
+                if (!stats || !stats.hasSections) {
                   return (
                     <div key={course.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div className="flex justify-between items-center">
@@ -149,9 +172,9 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
                 }
                 
                 return (
-                  <div key={course.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div key={course.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                         {course.name}
                       </span>
                       <div className="flex items-center space-x-2">
@@ -163,10 +186,33 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>High: {stats.highest}%</span>
-                      <span>Low: {stats.lowest}%</span>
-                      <span>{stats.count} grades</span>
+                    
+                    {/* Individual Section Marks */}
+                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">ST1</p>
+                        <p className={`text-lg font-bold ${stats.st1 ? getGradeColor(stats.st1) : 'text-gray-400'}`}>
+                          {stats.st1 ? `${stats.st1}%` : '-'}
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">ST2</p>
+                        <p className={`text-lg font-bold ${stats.st2 ? getGradeColor(stats.st2) : 'text-gray-400'}`}>
+                          {stats.st2 ? `${stats.st2}%` : '-'}
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Evaluation</p>
+                        <p className={`text-lg font-bold ${stats.evaluation ? getGradeColor(stats.evaluation) : 'text-gray-400'}`}>
+                          {stats.evaluation ? `${stats.evaluation}%` : '-'}
+                        </p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">End Term</p>
+                        <p className={`text-lg font-bold ${stats.end_term ? getGradeColor(stats.end_term) : 'text-gray-400'}`}>
+                          {stats.end_term ? `${stats.end_term}%` : '-'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );
@@ -175,11 +221,11 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
           )}
         </div>
 
-        {/* Recent Grades */}
+        {/* Detailed Marks Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-              Grade History
+              Detailed Section Marks
             </h3>
             <select
               value={selectedCourse}
@@ -200,43 +246,69 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
               No grades recorded yet
             </p>
           ) : (
-            <ul className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredGrades.map((grade, index) => (
-                <li
-                  key={`${grade.class_id}-${grade.assignment_name}-${index}`}
-                  className="py-3 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="flex-1">
-                      <span className="text-gray-700 dark:text-gray-300 font-medium block">
-                        {grade.assignment_name || 'Assignment'}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {getCourseName(grade.class_id)}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-xl font-bold ${getGradeColor(grade.score)}`}>
-                        {grade.score}%
-                      </span>
-                      <span className="block text-xs text-gray-500 dark:text-gray-400">
-                        {getLetterGrade(grade.score)}
-                      </span>
-                    </div>
-                  </div>
-                  {grade.graded_date && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      Graded: {formatDate(grade.graded_date)}
-                    </p>
-                  )}
-                  {grade.feedback && (
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 italic">
-                      "{grade.feedback}"
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Course</th>
+                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST1</th>
+                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST2</th>
+                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Evaluation</th>
+                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">End Term</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredGrades.map((grade, index) => (
+                    <tr
+                      key={`${grade.class_id}-${index}`}
+                      className="border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    >
+                      <td className="py-3 px-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {grade.class_name || getCourseName(grade.class_id)}
+                        </span>
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        {grade.st1 !== null && grade.st1 !== undefined ? (
+                          <span className={`font-bold ${getGradeColor(grade.st1)}`}>
+                            {grade.st1}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        {grade.st2 !== null && grade.st2 !== undefined ? (
+                          <span className={`font-bold ${getGradeColor(grade.st2)}`}>
+                            {grade.st2}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        {grade.evaluation !== null && grade.evaluation !== undefined ? (
+                          <span className={`font-bold ${getGradeColor(grade.evaluation)}`}>
+                            {grade.evaluation}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                      <td className="text-center py-3 px-2">
+                        {grade.end_term !== null && grade.end_term !== undefined ? (
+                          <span className={`font-bold ${getGradeColor(grade.end_term)}`}>
+                            {grade.end_term}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

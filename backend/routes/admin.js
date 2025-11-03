@@ -41,10 +41,10 @@ router.get("/classes", verifyAdmin, async (req, res) => {
 // CREATE class
 router.post("/classes", verifyAdmin, async (req, res) => {
   try {
-    const { name, day_of_week, schedule_time, teacher_id } = req.body;
+    const { name, day_of_week, schedule_time, duration_hours, teacher_id, group_name } = req.body;
 
-    if (!name || !day_of_week || !schedule_time || !teacher_id) {
-      return res.status(400).json({ message: "All fields required" });
+    if (!name || !day_of_week || !schedule_time || !teacher_id || !group_name) {
+      return res.status(400).json({ message: "All fields including group are required" });
     }
 
     const { data, error } = await supabase
@@ -52,8 +52,10 @@ router.post("/classes", verifyAdmin, async (req, res) => {
       .insert({
         name,
         day_of_week,
-        schedule_time,
+        start_time: schedule_time,
+        duration_hours: duration_hours || 1.0,
         teacher_id: parseInt(teacher_id),
+        group_name: group_name
       })
       .select("*, users!classes_teacher_id_fkey(id, name, email)")
       .single();
@@ -180,7 +182,7 @@ router.get("/users", verifyAdmin, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("users")
-      .select("id, name, email, role, created_at")
+      .select("id, name, email, role, group_name, created_at")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -248,10 +250,14 @@ router.get("/marks", verifyAdmin, async (req, res) => {
       .from("enrollments")
       .select(`
         marks,
+        st1_marks,
+        st2_marks,
+        evaluation_marks,
+        end_term_marks,
         student_id,
         class_id,
         users!enrollments_student_id_fkey (id, name, email),
-        classes (id, name, day_of_week, schedule_time)
+        classes (id, name, day_of_week, start_time)
       `);
 
     if (classId) {
@@ -266,11 +272,15 @@ router.get("/marks", verifyAdmin, async (req, res) => {
 
     if (error) throw error;
     
-    // Filter out entries without marks (optional)
+    // Include all section marks in response
     const marksData = (data || []).map(enrollment => ({
       student_id: enrollment.student_id,
       class_id: enrollment.class_id,
       marks: enrollment.marks,
+      st1: enrollment.st1_marks,
+      st2: enrollment.st2_marks,
+      evaluation: enrollment.evaluation_marks,
+      end_term: enrollment.end_term_marks,
       users: enrollment.users,
       classes: enrollment.classes
     }));
@@ -321,6 +331,63 @@ router.delete("/marks/:classId/:studentId", verifyAdmin, async (req, res) => {
     res.json({ message: "Marks deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Error deleting marks", error: err.message });
+  }
+});
+
+// UPDATE user group (assign student to a group)
+router.put("/users/:userId/group", verifyAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { group_name } = req.body;
+
+    if (!group_name || !/^G[0-9]+$/.test(group_name)) {
+      return res.status(400).json({ message: "Invalid group name. Must be in format G1, G2, etc." });
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({ group_name })
+      .eq("id", parseInt(userId))
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ message: "Student group updated successfully", data });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating student group", error: err.message });
+  }
+});
+
+// BULK UPDATE student groups
+router.put("/users/bulk-group", verifyAdmin, async (req, res) => {
+  try {
+    const { userIds, user_ids, group_name } = req.body;
+    const studentIds = userIds || user_ids; // Support both formats
+
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({ message: "userIds array is required" });
+    }
+
+    if (!group_name || !/^G[0-9]+$/.test(group_name)) {
+      return res.status(400).json({ message: "Invalid group name. Must be in format G1, G2, etc." });
+    }
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({ group_name })
+      .in("id", studentIds)
+      .select();
+
+    if (error) throw error;
+    
+    res.json({ 
+      message: `${data.length} student(s) assigned to group ${group_name}`,
+      updated: data.length,
+      data 
+    });
+  } catch (err) {
+    console.error('Bulk group assignment error:', err);
+    res.status(500).json({ message: "Error updating student groups", error: err.message });
   }
 });
 

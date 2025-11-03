@@ -71,6 +71,7 @@ const TeacherClasses = ({ allClasses, teacherName }) => {
                   <th className="pb-3">Class Name</th>
                   <th className="pb-3">Time</th>
                   <th className="pb-3">Day</th>
+                  <th className="pb-3">Group</th>
                   <th className="pb-3">Enrolled Students</th>
                   <th className="pb-3">Actions</th>
                 </tr>
@@ -82,6 +83,15 @@ const TeacherClasses = ({ allClasses, teacherName }) => {
                       <td className="py-3 text-gray-800 font-medium">{cls.name}</td>
                       <td className="py-3 text-gray-600">{cls.schedule_time || cls.time}</td>
                       <td className="py-3 text-gray-600 capitalize">{cls.day_of_week}</td>
+                      <td className="py-3">
+                        {cls.group_name ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {cls.group_name}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
+                      </td>
                       <td className="py-3 text-gray-600">{cls.enrolled_count || 0}</td>
                       <td className="py-3">
                         <div className="flex gap-2">
@@ -97,7 +107,7 @@ const TeacherClasses = ({ allClasses, teacherName }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="py-8 text-center text-gray-500">
+                    <td colSpan="6" className="py-8 text-center text-gray-500">
                       <div className="flex flex-col items-center">
                         <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />

@@ -133,26 +133,33 @@ router.get("/marks", verifyToken, async (req, res) => {
   try {
     const studentId = req.user.id;
 
-    // Get all enrollments with marks for this student
+    // Get all enrollments with all mark sections for this student
     const { data: enrollments, error: enrollmentsError } = await supabase
       .from("enrollments")
       .select(`
         marks,
+        st1_marks,
+        st2_marks,
+        evaluation_marks,
+        end_term_marks,
         class_id,
-        classes (id, name, day_of_week, schedule_time)
+        classes (id, name, day_of_week, start_time)
       `)
       .eq("student_id", studentId);
 
     if (enrollmentsError) throw enrollmentsError;
 
-    // Transform to match expected format
-    const marksData = (enrollments || [])
-      .filter(e => e.marks !== null && e.marks !== undefined)
-      .map(enrollment => ({
-        class_id: enrollment.class_id,
-        marks: enrollment.marks,
-        classes: enrollment.classes
-      }));
+    // Transform to include all mark sections
+    const marksData = (enrollments || []).map(enrollment => ({
+      class_id: enrollment.class_id,
+      class_name: enrollment.classes?.name,
+      st1: enrollment.st1_marks,
+      st2: enrollment.st2_marks,
+      evaluation: enrollment.evaluation_marks,
+      end_term: enrollment.end_term_marks,
+      marks: enrollment.marks, // Keep for backward compatibility
+      classes: enrollment.classes
+    }));
 
     res.json(marksData);
   } catch (err) {

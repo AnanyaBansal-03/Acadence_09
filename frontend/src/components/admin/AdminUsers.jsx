@@ -8,6 +8,10 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', role: 'student', password: '' });
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [bulkGroup, setBulkGroup] = useState('G1');
+  const availableGroups = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9', 'G10'];
 
   useEffect(() => {
     console.log('AdminUsers - initialUsers received:', initialUsers);
@@ -107,18 +111,78 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
     }
   };
 
+  const toggleUserSelection = (userId) => {
+    setSelectedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    const studentUsers = filteredUsers.filter(u => u.role === 'student');
+    if (selectedUsers.length === studentUsers.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(studentUsers.map(u => u.id));
+    }
+  };
+
+  const handleBulkGroupAssignment = async () => {
+    if (selectedUsers.length === 0) {
+      alert('Please select at least one student');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/admin/users/bulk-group', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userIds: selectedUsers,
+          group_name: bulkGroup
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to assign groups');
+
+      const result = await response.json();
+      alert(`Successfully assigned ${result.updated} students to group ${bulkGroup}`);
+      setSelectedUsers([]);
+      setShowGroupModal(false);
+      if (onDataRefresh) onDataRefresh();
+    } catch (err) {
+      console.error('Error assigning groups:', err);
+      alert('Failed to assign groups: ' + err.message);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Manage Users</h2>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-          >
-            + Create User
-          </button>
+          <div className="flex gap-2">
+            {selectedUsers.length > 0 && (
+              <button
+                onClick={() => setShowGroupModal(true)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
+              >
+                Assign Group ({selectedUsers.length})
+              </button>
+            )}
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            >
+              + Create User
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -147,9 +211,18 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="px-4 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === filteredUsers.filter(u => u.role === 'student').length && selectedUsers.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4"
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Name</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Email</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Group</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Created</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
               </tr>
@@ -157,6 +230,16 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
             <tbody>
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-4 py-3">
+                    {user.role === 'student' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={() => toggleUserSelection(user.id)}
+                        className="w-4 h-4"
+                      />
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{user.name}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
                   <td className="px-4 py-3">
@@ -167,6 +250,15 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
                     }`}>
                       {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.role === 'student' && user.group_name ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                        {user.group_name}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                     {new Date(user.created_at).toLocaleDateString()}
@@ -261,6 +353,50 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Group Assignment Modal */}
+      {showGroupModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+              Assign Students to Group
+            </h3>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Selected Students: {selectedUsers.length}
+              </p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Group
+              </label>
+              <select
+                value={bulkGroup}
+                onChange={(e) => setBulkGroup(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                {availableGroups.map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBulkGroupAssignment}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
+              >
+                Assign Group
+              </button>
+              <button
+                onClick={() => setShowGroupModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

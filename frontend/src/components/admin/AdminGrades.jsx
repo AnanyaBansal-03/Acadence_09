@@ -54,30 +54,36 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
 
       if (response.ok) {
         const marks = await response.json();
+        console.log('AdminGrades - Received marks from API:', marks);
         
         // Get enrollments for this class
         const classEnrollments = initialEnrollments.filter(e => e.class_id === parseInt(classId));
+        console.log('AdminGrades - Class enrollments:', classEnrollments);
         
-        // Combine enrollment and marks data
+        // Combine enrollment and marks data with all sections
         const combinedData = classEnrollments.map(enrollment => {
           const student = students.find(s => s.id === enrollment.student_id);
           const mark = marks.find(m => m.student_id === enrollment.student_id);
           
+          console.log(`Student ${enrollment.student_id} mark data:`, mark);
+          
           const email = student?.email || mark?.users?.email || 'N/A';
           const name = student?.name || mark?.users?.name || (email !== 'N/A' ? email.split('@')[0] : 'Unknown');
-          const marksValue = mark?.marks;
-          const gradeValue = calculateGrade(marksValue);
           
           return {
             enrollmentId: enrollment.id,
             studentId: enrollment.student_id,
             studentName: name,
             studentEmail: email,
-            marks: marksValue,
-            grade: gradeValue
+            st1: mark?.st1,
+            st2: mark?.st2,
+            evaluation: mark?.evaluation,
+            end_term: mark?.end_term,
+            marks: mark?.marks
           };
         });
         
+        console.log('AdminGrades - Combined data:', combinedData);
         setMarksData(combinedData);
       }
     } catch (err) {
@@ -185,14 +191,16 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
               <tr className="border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Student Name</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Email</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Current Marks</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Action</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">ST1</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">ST2</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Evaluation</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">End Term</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center">
+                  <td colSpan="6" className="px-6 py-12 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="text-gray-600 dark:text-gray-400">Loading marks...</span>
@@ -202,7 +210,30 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
               ) : filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => {
                   const editKey = `${selectedClass}-${student.studentId}`;
-                  const isEditing = editingKey === editKey;
+                  
+                  // Helper function to render a mark cell
+                  const renderMarkCell = (markValue) => {
+                    if (markValue === null || markValue === undefined) {
+                      return (
+                        <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+                      );
+                    }
+                    
+                    const numMark = parseFloat(markValue);
+                    const colorClass = numMark >= 75
+                      ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+                      : numMark >= 60
+                      ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
+                      : numMark >= 45
+                      ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
+                      : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300';
+                    
+                    return (
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${colorClass}`}>
+                        {numMark}
+                      </span>
+                    );
+                  };
                   
                   return (
                     <tr
@@ -221,74 +252,23 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{student.studentEmail}</td>
                       <td className="px-6 py-4 text-center">
-                        {isEditing ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={editMarks}
-                              onChange={(e) => setEditMarks(e.target.value)}
-                              className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white text-center"
-                              autoFocus
-                            />
-                            <span className="text-gray-600 dark:text-gray-400">/100</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center gap-2">
-                            <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                              student.marks >= 75
-                                ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                                : student.marks >= 60
-                                ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
-                                : student.marks >= 45
-                                ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
-                                : student.marks !== null && student.marks !== undefined
-                                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                            }`}>
-                              {student.marks !== null && student.marks !== undefined ? `${student.marks}/100` : 'Not graded'}
-                            </span>
-                            {student.grade && (
-                              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                ({student.grade})
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        {renderMarkCell(student.st1)}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {isEditing ? (
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={() => handleUpdateGrades(selectedClass, student.studentId, editMarks)}
-                              disabled={isUpdating}
-                              className="px-3 py-1 bg-green-600 dark:bg-green-700 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
-                            >
-                              {isUpdating ? '...' : 'Save'}
-                            </button>
-                            <button
-                              onClick={() => setEditingKey(null)}
-                              className="px-3 py-1 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 rounded text-sm hover:bg-gray-400 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleEditClick(student)}
-                            className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                          >
-                            {student.marks !== null && student.marks !== undefined ? 'Edit' : 'Add Marks'}
-                          </button>
-                        )}
+                        {renderMarkCell(student.st2)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {renderMarkCell(student.evaluation)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {renderMarkCell(student.end_term)}
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <div className="text-4xl mb-2">📊</div>
                     <p>{classes.length === 0 ? 'No classes available' : 'No students enrolled in this class'}</p>
                   </td>

@@ -62,22 +62,47 @@ const StudentDashboard = () => {
         dateOfBirth: localStorage.getItem('userDateOfBirth') || 'March 15, 2002'
       });
 
+      // Fetch student's group from database
+      let studentGroup = null;
+      try {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('group_name')
+          .eq('id', studentId)
+          .single();
+        
+        if (!userError && userData) {
+          studentGroup = userData.group_name;
+          setStudentData(prev => ({ ...prev, group_name: studentGroup }));
+        }
+      } catch (err) {
+        console.error('Error fetching student group:', err);
+      }
+
       let courses = [];
       let attendance = [];
       let assignments = [];
       let grades = [];
 
-      // Fetch courses (from 2nd code functionality)
+      // Fetch courses (from 2nd code functionality) - filter by group
       try {
         const { data: enrollmentData, error: enrollmentError } = await supabase
           .from('enrollments')
-          .select('class_id, classes(id, name, teacher_id, day_of_week)')
+          .select('class_id, classes(id, name, teacher_id, day_of_week, group_name)')
           .eq('student_id', studentId);
 
         if (enrollmentError) {
           setError('Failed to load courses: ' + enrollmentError.message);
         } else {
-          courses = enrollmentData?.map(enrollment => enrollment.classes).filter(cls => cls !== null) || [];
+          // Filter classes by student's group
+          let allClasses = enrollmentData?.map(enrollment => enrollment.classes).filter(cls => cls !== null) || [];
+          
+          // Only show classes that match student's group (or have no group assigned)
+          courses = allClasses.filter(cls => {
+            if (!studentGroup) return true; // If student has no group, show all
+            if (!cls.group_name) return true; // If class has no group, show to all
+            return cls.group_name === studentGroup; // Otherwise, match groups
+          });
         }
       } catch (err) {
         courses = [];
@@ -110,24 +135,17 @@ const StudentDashboard = () => {
         
         if (response.ok) {
           const marksData = await response.json();
-          // Transform marks data to match expected format and calculate grade
-          grades = marksData.map(mark => {
-            const score = mark.marks;
-            let grade = '';
-            if (score >= 90) grade = 'A';
-            else if (score >= 80) grade = 'B';
-            else if (score >= 70) grade = 'C';
-            else if (score >= 60) grade = 'D';
-            else if (score < 60) grade = 'F';
-            
-            return {
-              class_id: mark.class_id,
-              assignment_name: mark.classes?.name || 'Overall Grade',
-              score: score,
-              grade: grade,
-              graded_date: mark.uploaded_at
-            };
-          });
+          // Pass all section marks directly to StudentGrades component
+          grades = marksData.map(mark => ({
+            class_id: mark.class_id,
+            class_name: mark.class_name,
+            st1: mark.st1,
+            st2: mark.st2,
+            evaluation: mark.evaluation,
+            end_term: mark.end_term,
+            marks: mark.marks, // Keep for backward compatibility
+            classes: mark.classes
+          }));
         }
       } catch (err) {
         console.error('Error fetching marks:', err);
@@ -490,6 +508,14 @@ const WelcomePage = ({ onFeatureClick, studentData }) => {
         <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
           Welcome back, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{studentData?.name || 'Student'}</span>
         </h1>
+        {studentData?.group_name && (
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="text-gray-600">Assigned Group:</span>
+            <span className="px-4 py-2 rounded-full text-sm font-bold bg-purple-100 text-purple-800 border-2 border-purple-300 shadow-md">
+              {studentData.group_name}
+            </span>
+          </div>
+        )}
         <p className="text-gray-600 text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed">
           Your personalized learning platform. Track your courses, assignments, attendance, and academic progress all in one place.
         </p>

@@ -4,13 +4,19 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
   const [classes, setClasses] = useState(initialClasses);
   const [teachers, setTeachers] = useState(initialUsers.filter(u => u.role === 'teacher'));
   const [showModal, setShowModal] = useState(false);
+  const [viewMode, setViewMode] = useState('timetable'); // 'timetable' or 'list'
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState('all'); // Filter for timetable view
   const [formData, setFormData] = useState({
     name: '',
     day_of_week: 'monday',
     schedule_time: '',
-    teacher_id: ''
+    duration_hours: '1',
+    teacher_id: '',
+    group_name: 'G1'
   });
   const [isCreating, setIsCreating] = useState(false);
+
+  const availableGroups = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9', 'G10'];
 
   useEffect(() => {
     setClasses(initialClasses);
@@ -22,8 +28,8 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
 
   const handleCreateClass = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.teacher_id || !formData.schedule_time) {
-      alert('Please fill all fields');
+    if (!formData.name || !formData.teacher_id || !formData.schedule_time || !formData.duration_hours || !formData.group_name) {
+      alert('Please fill all fields including group');
       return;
     }
 
@@ -40,7 +46,9 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
           name: formData.name,
           day_of_week: formData.day_of_week,
           schedule_time: formData.schedule_time,
-          teacher_id: parseInt(formData.teacher_id)
+          duration_hours: parseFloat(formData.duration_hours),
+          teacher_id: parseInt(formData.teacher_id),
+          group_name: formData.group_name
         })
       });
 
@@ -51,7 +59,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
       }
 
       setClasses([result.data, ...classes]);
-      setFormData({ name: '', day_of_week: 'monday', schedule_time: '', teacher_id: '' });
+      setFormData({ name: '', day_of_week: 'monday', schedule_time: '', duration_hours: '1', teacher_id: '', group_name: 'G1' });
       setShowModal(false);
       alert('Class created successfully!');
       if (onDataRefresh) onDataRefresh();
@@ -100,56 +108,327 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
     'sunday': 'Sunday'
   };
 
+  const timeSlots = [
+     '09:00', '10:00', '11:00', '12:00', 
+    '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+  ];
+
+  const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+  // Helper to check if a time slot falls within a class period
+  const isTimeInRange = (slotTime, startTime, endTime) => {
+    const slotHour = parseInt(slotTime.split(':')[0]);
+    const startHour = parseInt(startTime.split(':')[0]);
+    const startMin = parseInt(startTime.split(':')[1] || '0');
+    const endHour = parseInt(endTime.split(':')[0]);
+    const endMin = parseInt(endTime.split(':')[1] || '0');
+    
+    const slotMinutes = slotHour * 60;
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    return slotMinutes >= startMinutes && slotMinutes < endMinutes;
+  };
+
+  // Calculate end time from start time and duration
+  const calculateEndTime = (startTime, durationHours) => {
+    if (!startTime || !durationHours) return null;
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + (durationHours * 60);
+    const endHours = Math.floor(totalMinutes / 60) % 24;
+    const endMinutes = totalMinutes % 60;
+    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+  };
+
+  // Group classes by day and time for timetable view
+  const getTimetableData = () => {
+    const timetable = {};
+    
+    daysOrder.forEach(day => {
+      timetable[day] = {};
+      timeSlots.forEach(slot => {
+        timetable[day][slot] = [];
+      });
+    });
+
+    // Filter classes by selected group
+    const filteredClasses = selectedGroupFilter === 'all' 
+      ? classes 
+      : classes.filter(cls => cls.group_name === selectedGroupFilter);
+
+    filteredClasses.forEach(cls => {
+      const startTime = cls.start_time || cls.schedule_time;
+      if (startTime && cls.day_of_week) {
+        const day = cls.day_of_week.toLowerCase();
+        const endTime = calculateEndTime(startTime, cls.duration_hours || 1);
+        
+        if (endTime) {
+          // Add the class to all time slots it spans
+          timeSlots.forEach(slot => {
+            if (isTimeInRange(slot, startTime, endTime)) {
+              timetable[day][slot].push({
+                ...cls,
+                isFirstSlot: slot === startTime.substring(0, 5),
+                calculatedEndTime: endTime
+              });
+            }
+          });
+        }
+      }
+    });
+
+    return timetable;
+  };
+
+  const timetableData = getTimetableData();
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Manage Classes</h2>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-          >
-            + Create Class
-          </button>
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Manage Classes</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">View and manage class schedule</p>
+          </div>
+          <div className="flex gap-3">
+            {/* Group Filter (only in timetable view) */}
+            {viewMode === 'timetable' && (
+              <select
+                value={selectedGroupFilter}
+                onChange={(e) => setSelectedGroupFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="all">All Groups</option>
+                {availableGroups.map(group => (
+                  <option key={group} value={group}>{group}</option>
+                ))}
+              </select>
+            )}
+            {/* View Toggle */}
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('timetable')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'timetable'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow'
+                    : 'text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                📅 Timetable
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow'
+                    : 'text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                📋 List
+              </button>
+            </div>
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            >
+              + Create Class
+            </button>
+          </div>
         </div>
 
-        {/* Classes Table */}
-        <div className="overflow-x-auto">
+        {/* Timetable View */}
+        {viewMode === 'timetable' ? (
+          <div>
+            {/* Group Filter Info */}
+            {selectedGroupFilter !== 'all' && (
+              <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Showing classes for:</span>
+                  <span className="px-3 py-1 rounded-full text-sm font-bold bg-purple-600 text-white">
+                    {selectedGroupFilter}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedGroupFilter('all')}
+                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                >
+                  Clear filter
+                </button>
+              </div>
+            )}
+            <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100 dark:bg-gray-700">
+                  <th className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 sticky left-0 bg-gray-100 dark:bg-gray-700">
+                    Time
+                  </th>
+                  {daysOrder.map(day => (
+                    <th key={day} className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {dayLabels[day]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {timeSlots.map(timeSlot => (
+                  <tr key={timeSlot} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 sticky left-0">
+                      {timeSlot}
+                    </td>
+                    {daysOrder.map(day => {
+                      const classesAtTime = timetableData[day][timeSlot] || [];
+                      return (
+                        <td key={`${day}-${timeSlot}`} className="border border-gray-300 dark:border-gray-600 px-2 py-2 align-top">
+                          {classesAtTime.length > 0 ? (
+                            <div className="space-y-1">
+                              {classesAtTime.map(cls => {
+                                // Only show full details in the first slot
+                                if (cls.isFirstSlot) {
+                                  return (
+                                    <div key={cls.id} className="bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500 dark:border-blue-400 p-2 rounded text-xs">
+                                      <div className="flex justify-between items-start">
+                                        <div className="font-semibold text-gray-800 dark:text-gray-100">{cls.name}</div>
+                                        <span className="px-2 py-0.5 bg-purple-500 text-white rounded text-xs font-bold">
+                                          {cls.group_name || 'No Group'}
+                                        </span>
+                                      </div>
+                                      <div className="text-gray-600 dark:text-gray-300 mt-1">
+                                        👤 {cls.users?.name || 'No teacher'}
+                                      </div>
+                                      <div className="text-gray-500 dark:text-gray-400 mt-1">
+                                        🕐 {cls.start_time || cls.schedule_time} - {cls.calculatedEndTime}
+                                      </div>
+                                      <button
+                                        onClick={() => handleDeleteClass(cls.id)}
+                                        className="mt-2 px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 w-full"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  );
+                                } else {
+                                  // Show continuation indicator in subsequent slots
+                                  return (
+                                    <div key={cls.id} className="bg-blue-50 dark:bg-blue-900/50 border-l-4 border-blue-400 dark:border-blue-500 p-2 rounded text-xs">
+                                      <div className="text-gray-700 dark:text-gray-300 text-center font-medium">
+                                        ↑ {cls.name}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-gray-400 dark:text-gray-500 text-xs text-center py-4">-</div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            </div>
+          </div>
+        ) : (
+          /* List View */
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Class Name</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Group</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Teacher</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Day</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Time</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Duration</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {classes.map((cls) => (
-                <tr key={cls.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium">{cls.name}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                    {cls.users?.name || 'Unassigned'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                    {dayLabels[cls.day_of_week] || cls.day_of_week}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{cls.schedule_time}</td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleDeleteClass(cls.id)}
-                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {classes.map((cls) => {
+                const getClassStatus = () => {
+                  const startTime = cls.start_time || cls.schedule_time; // Support both column names
+                  if (!startTime || !cls.duration_hours) return { label: 'Unknown', color: 'gray' };
+                  
+                  const now = new Date();
+                  const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                  const currentDay = daysOfWeek[now.getDay()];
+                  const currentTime = now.getHours() * 60 + now.getMinutes();
+                  
+                  const [hours, minutes] = startTime.split(':').map(Number);
+                  const startTimeMinutes = hours * 60 + minutes;
+                  const endTime = startTimeMinutes + (cls.duration_hours * 60);
+                  
+                  const daysMatch = currentDay === cls.day_of_week?.toLowerCase();
+                  
+                  if (daysMatch && currentTime >= startTimeMinutes && currentTime < endTime) {
+                    return { label: 'Ongoing', color: 'green' };
+                  } else if (daysMatch && currentTime >= endTime) {
+                    return { label: 'Ended', color: 'red' };
+                  } else {
+                    return { label: 'Upcoming', color: 'blue' };
+                  }
+                };
+
+                const status = getClassStatus();
+                const startTime = cls.start_time || cls.schedule_time; // Support both column names
+                const endTime = startTime && cls.duration_hours ? 
+                  (() => {
+                    const [hours, minutes] = startTime.split(':').map(Number);
+                    const totalMinutes = hours * 60 + minutes + (cls.duration_hours * 60);
+                    const endHours = Math.floor(totalMinutes / 60) % 24;
+                    const endMinutes = totalMinutes % 60;
+                    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+                  })() : '';
+
+                return (
+                  <tr key={cls.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium">{cls.name}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold">
+                        {cls.group_name || 'No Group'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {cls.users?.name || 'Unassigned'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {dayLabels[cls.day_of_week] || cls.day_of_week}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {startTime} {endTime && `- ${endTime}`}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {cls.duration_hours ? `${cls.duration_hours} hrs` : '1 hr'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                        ${status.color === 'green' ? 'bg-green-100 text-green-700' :
+                          status.color === 'red' ? 'bg-red-100 text-red-700' :
+                          status.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                          'bg-gray-100 text-gray-700'}`}>
+                        {status.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDeleteClass(cls.id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-        </div>
+          </div>
+        )}
 
         {classes.length === 0 && (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -158,7 +437,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
         )}
 
         {/* Stats */}
-        <div className="mt-6 grid grid-cols-2 gap-4">
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400">Total Classes</p>
             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{classes.length}</p>
@@ -166,6 +445,18 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
           <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400">Teachers</p>
             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{teachers.length}</p>
+          </div>
+          <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Active Groups</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {new Set(classes.map(c => c.group_name).filter(Boolean)).size}
+            </p>
+          </div>
+          <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400">Avg Classes/Group</p>
+            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {classes.length > 0 ? Math.round(classes.length / Math.max(new Set(classes.map(c => c.group_name).filter(Boolean)).size, 1)) : 0}
+            </p>
           </div>
         </div>
       </div>
@@ -201,7 +492,26 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                 value={formData.schedule_time}
                 onChange={(e) => setFormData({ ...formData, schedule_time: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                placeholder="Start Time"
               />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Class Duration
+                </label>
+                <select
+                  value={formData.duration_hours}
+                  onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="0.5">30 minutes</option>
+                  <option value="1">1 hour</option>
+                  <option value="1.5">1.5 hours</option>
+                  <option value="2">2 hours</option>
+                  <option value="2.5">2.5 hours</option>
+                  <option value="3">3 hours</option>
+                  <option value="4">4 hours</option>
+                </select>
+              </div>
               <select
                 value={formData.teacher_id}
                 onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
@@ -214,6 +524,26 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                   </option>
                 ))}
               </select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Group <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.group_name}
+                  onChange={(e) => setFormData({ ...formData, group_name: e.target.value })}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  {availableGroups.map((group) => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Students assigned to this group will see this class
+                </p>
+              </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
