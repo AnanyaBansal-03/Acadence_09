@@ -9,8 +9,13 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
     console.log('StudentGrades - Received courses:', courses);
   }, [grades, courses]);
 
-  // Get course name by ID
+  // Get course name by ID (works with both subjects and legacy classes)
   const getCourseName = (classId) => {
+    // Check if it's a subject with allClassIds
+    const subject = courses.find(c => c.allClassIds && c.allClassIds.includes(classId));
+    if (subject) return subject.subject_code || subject.name;
+    
+    // Legacy: direct class match
     const course = courses.find(c => c.id === classId);
     return course?.name || 'Unknown Course';
   };
@@ -23,22 +28,27 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
     return (total / validGrades.length).toFixed(2);
   };
 
-  // Calculate grade statistics per course including all sections
+  // Calculate grade statistics per subject (aggregating all class sessions)
   const calculateGradeStats = () => {
     const stats = {};
     
-    courses.forEach(course => {
-      const courseGrades = grades.filter(g => g.class_id === course.id);
-      if (courseGrades.length === 0) {
-        stats[course.id] = null;
+    courses.forEach(subject => {
+      // Get all class IDs for this subject
+      const classIds = subject.allClassIds || [subject.id];
+      
+      // Get grades from ALL sessions of this subject
+      const subjectGrades = grades.filter(g => classIds.includes(g.class_id));
+      
+      if (subjectGrades.length === 0) {
+        stats[subject.id] = null;
         return;
       }
 
-      // Calculate averages for each section
-      const st1Avg = calculateSectionAverage(courseGrades, 'st1');
-      const st2Avg = calculateSectionAverage(courseGrades, 'st2');
-      const evalAvg = calculateSectionAverage(courseGrades, 'evaluation');
-      const endTermAvg = calculateSectionAverage(courseGrades, 'end_term');
+      // Calculate averages for each section across all sessions
+      const st1Avg = calculateSectionAverage(subjectGrades, 'st1');
+      const st2Avg = calculateSectionAverage(subjectGrades, 'st2');
+      const evalAvg = calculateSectionAverage(subjectGrades, 'evaluation');
+      const endTermAvg = calculateSectionAverage(subjectGrades, 'end_term');
 
       // Calculate overall average from available sections
       const availableAverages = [st1Avg, st2Avg, evalAvg, endTermAvg].filter(avg => avg !== null);
@@ -46,8 +56,8 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
         ? (availableAverages.reduce((sum, avg) => sum + parseFloat(avg), 0) / availableAverages.length).toFixed(2)
         : 0;
       
-      stats[course.id] = {
-        courseName: course.name,
+      stats[subject.id] = {
+        courseName: subject.subject_code || subject.name,
         st1: st1Avg,
         st2: st2Avg,
         evaluation: evalAvg,
@@ -93,10 +103,15 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
   const gradeStats = calculateGradeStats();
   const overallAverage = calculateOverallGPA();
 
-  // Filter grades by selected course
+  // Filter grades by selected subject (includes all class sessions of that subject)
   const filteredGrades = selectedCourse === 'all'
     ? grades
-    : grades.filter(g => g.class_id === parseInt(selectedCourse));
+    : (() => {
+        const selectedSubject = courses.find(c => c.id === parseInt(selectedCourse));
+        if (!selectedSubject) return [];
+        const classIds = selectedSubject.allClassIds || [selectedSubject.id];
+        return grades.filter(g => classIds.includes(g.class_id));
+      })();
 
   // Format date
   const formatDate = (dateString) => {
@@ -143,14 +158,14 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Current Grades by Course - Show All Sections */}
+        {/* Current Grades by Subject - Show All Sections */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
-            Current Grades by Section
+            Current Grades by Subject
           </h3>
           {courses.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No courses enrolled yet
+              No subjects enrolled yet
             </p>
           ) : (
             <div className="space-y-4">
@@ -161,7 +176,7 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
                     <div key={course.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {course.name}
+                          {course.subject_code || course.name}
                         </span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
                           No grades yet
@@ -175,7 +190,7 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
                   <div key={course.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        {course.name}
+                        {course.subject_code || course.name}
                       </span>
                       <div className="flex items-center space-x-2">
                         <span className={`text-2xl font-bold ${getGradeColor(stats.average)}`}>
@@ -232,84 +247,104 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
               onChange={(e) => setSelectedCourse(e.target.value)}
               className="px-3 py-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
-              <option value="all">All Courses</option>
+              <option value="all">All Subjects</option>
               {courses.map(course => (
                 <option key={course.id} value={course.id}>
-                  {course.name}
+                  {course.subject_code || course.name}
                 </option>
               ))}
             </select>
           </div>
           
-          {filteredGrades.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No grades recorded yet
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Course</th>
-                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST1</th>
-                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST2</th>
-                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Evaluation</th>
-                    <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">End Term</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredGrades.map((grade, index) => (
-                    <tr
-                      key={`${grade.class_id}-${index}`}
-                      className="border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                    >
-                      <td className="py-3 px-2">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {grade.class_name || getCourseName(grade.class_id)}
-                        </span>
-                      </td>
-                      <td className="text-center py-3 px-2">
-                        {grade.st1 !== null && grade.st1 !== undefined ? (
-                          <span className={`font-bold ${getGradeColor(grade.st1)}`}>
-                            {grade.st1}%
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </td>
-                      <td className="text-center py-3 px-2">
-                        {grade.st2 !== null && grade.st2 !== undefined ? (
-                          <span className={`font-bold ${getGradeColor(grade.st2)}`}>
-                            {grade.st2}%
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </td>
-                      <td className="text-center py-3 px-2">
-                        {grade.evaluation !== null && grade.evaluation !== undefined ? (
-                          <span className={`font-bold ${getGradeColor(grade.evaluation)}`}>
-                            {grade.evaluation}%
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </td>
-                      <td className="text-center py-3 px-2">
-                        {grade.end_term !== null && grade.end_term !== undefined ? (
-                          <span className={`font-bold ${getGradeColor(grade.end_term)}`}>
-                            {grade.end_term}%
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </td>
+          {(() => {
+            // Get subjects to display based on filter
+            const subjectsToDisplay = selectedCourse === 'all'
+              ? courses
+              : courses.filter(c => c.id === parseInt(selectedCourse));
+
+            // Filter out subjects with no grades
+            const subjectsWithGrades = subjectsToDisplay.filter(subject => {
+              const stats = gradeStats[subject.id];
+              return stats && stats.hasSections;
+            });
+
+            if (subjectsWithGrades.length === 0) {
+              return (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                  No grades recorded yet
+                </p>
+              );
+            }
+
+            return (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Subject</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST1</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST2</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Evaluation</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">End Term</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {subjectsWithGrades.map((subject) => {
+                      const stats = gradeStats[subject.id];
+                      return (
+                        <tr
+                          key={subject.id}
+                          className="border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        >
+                          <td className="py-3 px-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {subject.subject_code || subject.name}
+                            </span>
+                          </td>
+                          <td className="text-center py-3 px-2">
+                            {stats.st1 !== null && stats.st1 !== undefined ? (
+                              <span className={`font-bold ${getGradeColor(stats.st1)}`}>
+                                {stats.st1}%
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </td>
+                          <td className="text-center py-3 px-2">
+                            {stats.st2 !== null && stats.st2 !== undefined ? (
+                              <span className={`font-bold ${getGradeColor(stats.st2)}`}>
+                                {stats.st2}%
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </td>
+                          <td className="text-center py-3 px-2">
+                            {stats.evaluation !== null && stats.evaluation !== undefined ? (
+                              <span className={`font-bold ${getGradeColor(stats.evaluation)}`}>
+                                {stats.evaluation}%
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </td>
+                          <td className="text-center py-3 px-2">
+                            {stats.end_term !== null && stats.end_term !== undefined ? (
+                              <span className={`font-bold ${getGradeColor(stats.end_term)}`}>
+                                {stats.end_term}%
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       </div>
 

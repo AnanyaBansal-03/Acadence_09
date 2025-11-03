@@ -98,6 +98,50 @@ router.get("/enrollments", verifyAdmin, async (req, res) => {
   }
 });
 
+// GET unique subjects (for enrollment dropdown)
+router.get("/subjects", verifyAdmin, async (req, res) => {
+  try {
+    const { group_name } = req.query;
+    
+    let query = supabase
+      .from("classes")
+      .select("subject_code, name, group_name, day_of_week, start_time")
+      .not("subject_code", "is", null)
+      .order("subject_code");
+
+    if (group_name) {
+      query = query.eq("group_name", group_name);
+    }
+
+    const { data: classes, error: classError } = await query;
+    
+    if (classError) throw classError;
+
+    // Group classes by subject_code
+    const subjectsMap = {};
+    classes.forEach(cls => {
+      if (!subjectsMap[cls.subject_code]) {
+        subjectsMap[cls.subject_code] = {
+          subject_code: cls.subject_code,
+          subject_name: cls.subject_code,
+          group_name: cls.group_name,
+          sessions: []
+        };
+      }
+      subjectsMap[cls.subject_code].sessions.push({
+        day: cls.day_of_week,
+        time: cls.start_time
+      });
+    });
+
+    const subjects = Object.values(subjectsMap);
+    
+    res.json(subjects);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching subjects", error: err.message });
+  }
+});
+
 // CREATE enrollment
 router.post("/enrollments", verifyAdmin, async (req, res) => {
   try {
@@ -136,6 +180,89 @@ router.post("/enrollments", verifyAdmin, async (req, res) => {
     res.json({ message: "Enrollment created successfully", data });
   } catch (err) {
     res.status(500).json({ message: "Error creating enrollment", error: err.message });
+  }
+});
+
+// SUBJECT-BASED ENROLLMENT - Enroll students in all classes of a subject
+router.post("/enrollments/subject", verifyAdmin, async (req, res) => {
+  try {
+    const { student_ids, subject_code, group_name } = req.body;
+
+    if (!student_ids || !subject_code || !group_name || student_ids.length === 0) {
+      return res.status(400).json({ 
+        message: "Student IDs, subject code, and group name are required" 
+      });
+    }
+
+    // Get all classes for this subject and group
+    const { data: subjectClasses, error: classError } = await supabase
+      .from("classes")
+      .select("id, name, day_of_week")
+      .eq("subject_code", subject_code)
+      .eq("group_name", group_name);
+
+    if (classError) throw classError;
+
+    if (!subjectClasses || subjectClasses.length === 0) {
+      return res.status(404).json({ 
+        message: `No classes found for subject ${subject_code} in group ${group_name}` 
+      });
+    }
+
+    let successCount = 0;
+    let skipCount = 0;
+    const enrollments = [];
+
+    // Enroll each student in all classes of this subject
+    for (const studentId of student_ids) {
+      for (const classItem of subjectClasses) {
+        // Check if already enrolled
+        const { data: existing } = await supabase
+          .from("enrollments")
+          .select("id")
+          .eq("student_id", parseInt(studentId))
+          .eq("class_id", classItem.id)
+          .single();
+
+        if (!existing) {
+          const { data: enrollment, error: enrollError } = await supabase
+            .from("enrollments")
+            .insert({
+              student_id: parseInt(studentId),
+              class_id: classItem.id,
+            })
+            .select()
+            .single();
+
+          if (!enrollError && enrollment) {
+            successCount++;
+            enrollments.push(enrollment);
+          }
+        } else {
+          skipCount++;
+        }
+      }
+    }
+
+    res.json({ 
+      message: `Enrolled ${student_ids.length} student(s) in ${subject_code}`,
+      details: {
+        students: student_ids.length,
+        subject: subject_code,
+        group: group_name,
+        classesPerStudent: subjectClasses.length,
+        totalEnrollments: successCount,
+        skipped: skipCount,
+        classes: subjectClasses.map(c => `${c.name} (${c.day_of_week})`)
+      },
+      data: enrollments
+    });
+  } catch (err) {
+    console.error("Error in subject-based enrollment:", err);
+    res.status(500).json({ 
+      message: "Error creating enrollments", 
+      error: err.message 
+    });
   }
 });
 

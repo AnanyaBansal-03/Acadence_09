@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
 const TeacherMarks = ({ allClasses, teacherName }) => {
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedSection, setSelectedSection] = useState('st1');
   const [marksData, setMarksData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,15 +16,49 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
     { value: 'end_term', label: 'End Term', column: 'end_term_marks' }
   ];
 
+  // Group classes by subject AND group (each subject-group combo is separate)
+  const subjects = React.useMemo(() => {
+    if (!allClasses || !Array.isArray(allClasses) || allClasses.length === 0) {
+      return [];
+    }
+    
+    try {
+      const subjectsMap = {};
+      allClasses.forEach(cls => {
+        if (!cls || !cls.id) return; // Skip invalid class objects
+        
+        const subjectCode = cls.subject_code || (cls.name ? cls.name.split(' ')[0] : 'UNKNOWN');
+        const groupName = cls.group_name || 'No Group';
+        
+        // Create unique key for subject + group combination
+        const key = `${subjectCode}_${groupName}`;
+        
+        if (!subjectsMap[key]) {
+          subjectsMap[key] = {
+            subject_code: subjectCode,
+            name: cls.name ? cls.name.split(/\[G\d+\]/)[0].trim() : subjectCode,
+            group_name: groupName,
+            classIds: []
+          };
+        }
+        subjectsMap[key].classIds.push(cls.id);
+      });
+      return Object.values(subjectsMap);
+    } catch (error) {
+      console.error('Error grouping classes by subject:', error);
+      return [];
+    }
+  }, [allClasses]);
+
   const showSuccess = (message) => {
     setSuccessMessage(message);
     setTimeout(() => setSuccessMessage(''), 5000);
   };
 
-  const handleClassChange = async (classId) => {
-    setSelectedClass(classId);
-    if (classId) {
-      fetchMarksForClass(classId, selectedSection);
+  const handleSubjectChange = async (subjectKey) => {
+    setSelectedSubject(subjectKey);
+    if (subjectKey) {
+      fetchMarksForSubject(subjectKey, selectedSection);
     } else {
       setMarksData([]);
     }
@@ -32,50 +66,96 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
 
   const handleSectionChange = async (section) => {
     setSelectedSection(section);
-    if (selectedClass) {
-      fetchMarksForClass(selectedClass, section);
+    if (selectedSubject) {
+      fetchMarksForSubject(selectedSubject, section);
     }
   };
 
-  const fetchMarksForClass = async (classId, section) => {
+  const fetchMarksForSubject = async (subjectKey, section) => {
     setLoading(true);
     try {
+      // Find subject by unique key (subject_code_groupName)
+      const subject = subjects.find(s => `${s.subject_code}_${s.group_name}` === subjectKey);
+      if (!subject) {
+        setLoading(false);
+        setMarksData([]);
+        return;
+      }
+
       const sectionObj = sections.find(s => s.value === section);
+      if (!sectionObj) {
+        setLoading(false);
+        setMarksData([]);
+        return;
+      }
+      
       const columnName = sectionObj.column;
 
-      // Fetch enrollments for the class with all marks columns
+      // Fetch enrollments for ALL class sessions of this subject
       const { data: enrollments, error: enrollError } = await supabase
         .from('enrollments')
         .select(`
           student_id,
+          class_id,
           st1_marks,
           st2_marks,
           evaluation_marks,
           end_term_marks,
-          users:student_id (id, name, email)
+          users:student_id (id, name, email, group_name)
         `)
-        .eq('class_id', parseInt(classId));
+        .in('class_id', subject.classIds);
 
       if (enrollError) {
         console.error('Error fetching enrollments:', enrollError);
         throw enrollError;
       }
 
-      // Combine student and marks data for selected section
-      const combined = enrollments?.map(enrollment => {
-        const email = enrollment.users?.email || '';
-        const name = enrollment.users?.name || (email ? email.split('@')[0] : 'Unknown');
-        const marksValue = enrollment[columnName] !== null && enrollment[columnName] !== undefined ? enrollment[columnName] : '';
-        const gradeValue = marksValue !== '' ? calculateGrade(marksValue) : '';
+      // Helper function to extract roll number from email
+      const getRollNumber = (email) => {
+        if (!email) return '9999';
+        const match = email.match(/(\d{4})(?:\.|@)/);
+        return match ? match[1] : '9999';
+      };
+
+      // Group enrollments by student (since one student has multiple enrollments across sessions)
+      const studentMap = {};
+      enrollments?.forEach(enrollment => {
+        const studentId = enrollment.student_id;
+        if (!studentMap[studentId]) {
+          const email = enrollment.users?.email || '';
+          const name = enrollment.users?.name || (email ? email.split('@')[0] : 'Unknown');
+          const rollNumber = getRollNumber(email);
+          
+          studentMap[studentId] = {
+            student_id: studentId,
+            student_name: name,
+            student_email: email,
+            student_group: enrollment.users?.group_name || 'No Group',
+            roll_number: rollNumber,
+            marks: '',
+            grade: '',
+            enrollmentIds: []
+          };
+        }
+        // Store all enrollment IDs for this student (for updating later)
+        studentMap[studentId].enrollmentIds.push({ 
+          id: enrollment.student_id, 
+          class_id: enrollment.class_id 
+        });
         
-        return {
-          student_id: enrollment.student_id,
-          student_name: name,
-          student_email: email,
-          marks: marksValue,
-          grade: gradeValue
-        };
-      }) || [];
+        // If this enrollment has marks for the selected section, use it
+        const existingMarks = enrollment[columnName];
+        if (existingMarks !== null && existingMarks !== undefined) {
+          studentMap[studentId].marks = existingMarks;
+          studentMap[studentId].grade = calculateGrade(existingMarks);
+        }
+      });
+
+      // Convert to array
+      const combined = Object.values(studentMap);
+
+      // Sort by roll number
+      combined.sort((a, b) => a.roll_number.localeCompare(b.roll_number));
 
       setMarksData(combined);
     } catch (err) {
@@ -105,8 +185,8 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
   };
 
   const handleSaveMarks = async () => {
-    if (!selectedClass) {
-      alert('Please select a class');
+    if (!selectedSubject) {
+      alert('Please select a subject');
       return;
     }
 
@@ -115,36 +195,54 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
       return;
     }
 
+    // Find subject by unique key (subject_code_groupName)
+    const subject = subjects.find(s => `${s.subject_code}_${s.group_name}` === selectedSubject);
+    if (!subject) {
+      alert('Selected subject not found. Please select a valid subject.');
+      return;
+    }
+
     setUploading(true);
     try {
       const sectionObj = sections.find(s => s.value === selectedSection);
+      if (!sectionObj) {
+        alert('Invalid section selected');
+        setUploading(false);
+        return;
+      }
       
-      // Prepare marks data for upload
-      const marksToUpload = marksData
-        .filter(item => item.marks && item.marks !== '')
-        .map(item => ({
-          student_id: item.student_id,
-          marks: parseFloat(item.marks)
-        }));
+      // Prepare marks data - update all enrollments for each student across all class sessions
+      const updates = [];
+      marksData.forEach(item => {
+        if (item.marks && item.marks !== '' && item.enrollmentIds && item.enrollmentIds.length > 0) {
+          // Update marks for ALL enrollments of this student (all sessions of the subject)
+          item.enrollmentIds.forEach(enrollment => {
+            updates.push({
+              student_id: item.student_id,
+              class_id: enrollment.class_id,
+              marks: parseFloat(item.marks)
+            });
+          });
+        }
+      });
 
-      if (marksToUpload.length === 0) {
+      if (updates.length === 0) {
         alert('No marks to save');
         setUploading(false);
         return;
       }
 
-      // Call backend API to upload marks
+      // Call backend API to upload marks for all sessions
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/teacher/upload-marks', {
+      const response = await fetch('http://localhost:5000/api/teacher/upload-marks-bulk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          classId: parseInt(selectedClass),
           section: selectedSection,
-          marksData: marksToUpload
+          marksData: updates
         })
       });
 
@@ -162,10 +260,10 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
         throw new Error(result.message || 'Failed to upload marks');
       }
 
-      showSuccess(`✅ ${result.uploaded} ${sectionObj.label} marks uploaded successfully for ${result.className}!`);
+      showSuccess(`✅ ${result.uploaded || updates.length} ${sectionObj.label} marks uploaded successfully for ${subject.subject_code}!`);
       
       // Refresh marks data
-      await fetchMarksForClass(selectedClass, selectedSection);
+      await fetchMarksForSubject(selectedSubject, selectedSection);
     } catch (err) {
       console.error('Error saving marks:', err);
       alert('Error saving marks: ' + err.message);
@@ -202,23 +300,50 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
           </p>
         </div>
 
-        {/* Class Selection */}
+        {/* Subject Selection */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Class
+            Select Subject
           </label>
-          <select
-            value={selectedClass}
-            onChange={(e) => handleClassChange(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Choose a class...</option>
-            {(allClasses || []).map(cls => (
-              <option key={cls.id} value={cls.id}>
-                {cls.name} ({cls.day_of_week} - {cls.schedule_time})
-              </option>
-            ))}
-          </select>
+          {subjects.length === 0 ? (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+              <p className="text-sm">No subjects available. Please ensure you have classes assigned.</p>
+            </div>
+          ) : (
+            <>
+              <select
+                value={selectedSubject}
+                onChange={(e) => handleSubjectChange(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Choose a subject...</option>
+                {subjects.map(subject => {
+                  const uniqueKey = `${subject.subject_code}_${subject.group_name}`;
+                  return (
+                    <option key={uniqueKey} value={uniqueKey}>
+                      {subject.subject_code} [{subject.group_name}]
+                    </option>
+                  );
+                })}
+              </select>
+              {selectedSubject && (() => {
+                const selectedSubjectData = subjects.find(s => `${s.subject_code}_${s.group_name}` === selectedSubject);
+                if (selectedSubjectData?.group_name) {
+                  return (
+                    <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        📌 Selected Group: <span className="font-bold text-purple-600">{selectedSubjectData.group_name}</span>
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Marks will be entered for all students in this subject across all class sessions
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </>
+          )}
         </div>
 
         {/* Section Selection */}
@@ -244,7 +369,7 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
           </div>
         </div>
 
-        {selectedClass && (
+        {selectedSubject && (
           <>
             {/* Marks Table */}
             <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50 mb-6">
@@ -261,7 +386,9 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left text-gray-500 border-b border-gray-200">
+                      <th className="pb-3 px-4">Roll No.</th>
                       <th className="pb-3 px-4">Student Name</th>
+                      <th className="pb-3 px-4">Group</th>
                       <th className="pb-3 px-4">Email</th>
                       <th className="pb-3 px-4">Marks (0-100)</th>
                       <th className="pb-3 px-4">Grade</th>
@@ -271,7 +398,13 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                     {marksData.length > 0 ? (
                       marksData.map((item, index) => (
                         <tr key={index} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-3 px-4 text-gray-800 font-bold">{item.roll_number}</td>
                           <td className="py-3 px-4 text-gray-800 font-medium">{item.student_name}</td>
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold">
+                              {item.student_group}
+                            </span>
+                          </td>
                           <td className="py-3 px-4 text-gray-600">{item.student_email}</td>
                           <td className="py-3 px-4">
                             <select

@@ -3,13 +3,43 @@ import React, { useState, useEffect } from 'react';
 const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasses = [], onDataRefresh }) => {
   const [students, setStudents] = useState(initialUsers.filter(u => u.role === 'student'));
   const [classes, setClasses] = useState(initialClasses);
-  const [selectedClass, setSelectedClass] = useState(classes.length > 0 ? classes[0]?.id : '');
+  const [subjects, setSubjects] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingKey, setEditingKey] = useState(null);
   const [editMarks, setEditMarks] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [marksData, setMarksData] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Group classes by subject AND group
+  useEffect(() => {
+    const subjectsMap = {};
+    initialClasses.forEach(cls => {
+      const subjectCode = cls.subject_code || cls.name.split(' ')[0];
+      const groupName = cls.group_name || 'No Group';
+      
+      // Create unique key for subject + group combination
+      const key = `${subjectCode}_${groupName}`;
+      
+      if (!subjectsMap[key]) {
+        subjectsMap[key] = {
+          subject_code: subjectCode,
+          name: cls.name.split(/\[G\d+\]/)[0].trim(),
+          group_name: groupName,
+          classIds: []
+        };
+      }
+      subjectsMap[key].classIds.push(cls.id);
+    });
+    const subjectsArray = Object.values(subjectsMap);
+    setSubjects(subjectsArray);
+    if (subjectsArray.length > 0 && !selectedSubject) {
+      const firstKey = `${subjectsArray[0].subject_code}_${subjectsArray[0].group_name}`;
+      setSelectedSubject(firstKey);
+    }
+    setClasses(initialClasses);
+  }, [initialClasses]);
 
   // Calculate grade from marks
   const calculateGrade = (marks) => {
@@ -24,68 +54,90 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
     return 'F';
   };
 
-  // Fetch marks when class changes
+  // Fetch marks when subject changes
   useEffect(() => {
-    if (selectedClass) {
-      fetchMarksForClass(selectedClass);
+    if (selectedSubject) {
+      fetchMarksForSubject(selectedSubject);
     }
-  }, [selectedClass]);
+  }, [selectedSubject]);
 
   useEffect(() => {
     setStudents(initialUsers.filter(u => u.role === 'student'));
   }, [initialUsers]);
 
-  useEffect(() => {
-    if (initialClasses.length > 0 && !selectedClass) {
-      setSelectedClass(initialClasses[0].id);
-    }
-    setClasses(initialClasses);
-  }, [initialClasses]);
-
-  const fetchMarksForClass = async (classId) => {
+  const fetchMarksForSubject = async (subjectKey) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/marks?classId=${classId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Find subject by unique key (subject_code_groupName)
+      const subject = subjects.find(s => `${s.subject_code}_${s.group_name}` === subjectKey);
+      if (!subject) return;
 
-      if (response.ok) {
-        const marks = await response.json();
-        console.log('AdminGrades - Received marks from API:', marks);
+      const token = localStorage.getItem('token');
+      
+      // Fetch marks for all class sessions of this subject
+      const marksPromises = subject.classIds.map(classId =>
+        fetch(`http://localhost:5000/api/admin/marks?classId=${classId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => res.json())
+      );
+
+      const marksArrays = await Promise.all(marksPromises);
+      const allMarks = marksArrays.flat();
         
-        // Get enrollments for this class
-        const classEnrollments = initialEnrollments.filter(e => e.class_id === parseInt(classId));
-        console.log('AdminGrades - Class enrollments:', classEnrollments);
+      // Get enrollments for ALL classes in this subject
+      const classEnrollments = initialEnrollments.filter(e => 
+        subject.classIds.includes(e.class_id)
+      );
+      
+      console.log('AdminGrades - Class enrollments:', classEnrollments);
+      console.log('AdminGrades - All marks:', allMarks);
         
-        // Combine enrollment and marks data with all sections
-        const combinedData = classEnrollments.map(enrollment => {
-          const student = students.find(s => s.id === enrollment.student_id);
-          const mark = marks.find(m => m.student_id === enrollment.student_id);
+      // Helper function to extract roll number from email
+      const getRollNumber = (email) => {
+        if (!email) return '9999';
+        const match = email.match(/(\d{4})(?:\.|@)/);
+        return match ? match[1] : '9999';
+      };
+      
+      // Group by student (since one student has multiple enrollments across sessions)
+      const studentMap = {};
+      classEnrollments.forEach(enrollment => {
+        const student = students.find(s => s.id === enrollment.student_id);
+        const studentMarks = allMarks.filter(m => m.student_id === enrollment.student_id);
+        
+        if (!studentMap[enrollment.student_id]) {
+          const email = student?.email || 'N/A';
+          const name = student?.name || (email !== 'N/A' ? email.split('@')[0] : 'Unknown');
+          const rollNumber = getRollNumber(email);
           
-          console.log(`Student ${enrollment.student_id} mark data:`, mark);
+          // Aggregate marks across all sessions (take first non-null value or average)
+          const st1Values = studentMarks.filter(m => m.st1 !== null && m.st1 !== undefined).map(m => m.st1);
+          const st2Values = studentMarks.filter(m => m.st2 !== null && m.st2 !== undefined).map(m => m.st2);
+          const evalValues = studentMarks.filter(m => m.evaluation !== null && m.evaluation !== undefined).map(m => m.evaluation);
+          const endTermValues = studentMarks.filter(m => m.end_term !== null && m.end_term !== undefined).map(m => m.end_term);
           
-          const email = student?.email || mark?.users?.email || 'N/A';
-          const name = student?.name || mark?.users?.name || (email !== 'N/A' ? email.split('@')[0] : 'Unknown');
-          
-          return {
+          studentMap[enrollment.student_id] = {
             enrollmentId: enrollment.id,
             studentId: enrollment.student_id,
             studentName: name,
             studentEmail: email,
-            st1: mark?.st1,
-            st2: mark?.st2,
-            evaluation: mark?.evaluation,
-            end_term: mark?.end_term,
-            marks: mark?.marks
+            studentGroup: student?.group_name || 'No Group',
+            rollNumber: rollNumber,
+            st1: st1Values.length > 0 ? st1Values[0] : undefined,
+            st2: st2Values.length > 0 ? st2Values[0] : undefined,
+            evaluation: evalValues.length > 0 ? evalValues[0] : undefined,
+            end_term: endTermValues.length > 0 ? endTermValues[0] : undefined
           };
-        });
-        
-        console.log('AdminGrades - Combined data:', combinedData);
-        setMarksData(combinedData);
-      }
+        }
+      });
+      
+      const combinedData = Object.values(studentMap);
+      
+      // Sort by roll number
+      combinedData.sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
+      
+      console.log('AdminGrades - Combined data:', combinedData);
+      setMarksData(combinedData);
     } catch (err) {
       console.error('Error fetching marks:', err);
     } finally {
@@ -142,7 +194,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
   };
 
   const handleEditClick = (student) => {
-    setEditingKey(`${selectedClass}-${student.studentId}`);
+    setEditingKey(`${selectedSubject}-${student.studentId}`);
     setEditMarks(student.marks || '');
   };
 
@@ -152,25 +204,44 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">View Marks of Students</h2>
-          <p className="text-gray-600 dark:text-gray-400">View student grades by class</p>
+          <p className="text-gray-600 dark:text-gray-400">View student grades by subject</p>
         </div>
 
-        {/* Class Selection */}
+        {/* Subject Selection */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Select Class
+            Select Subject
           </label>
           <select
-            value={selectedClass || ''}
-            onChange={(e) => setSelectedClass(parseInt(e.target.value))}
+            value={selectedSubject || ''}
+            onChange={(e) => setSelectedSubject(e.target.value)}
             className="w-full md:w-80 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
           >
-            {classes.map((cls) => (
-              <option key={cls.id} value={cls.id}>
-                {cls.name} - {cls.day_of_week} {cls.schedule_time}
-              </option>
-            ))}
+            {subjects.map((subject) => {
+              const uniqueKey = `${subject.subject_code}_${subject.group_name}`;
+              return (
+                <option key={uniqueKey} value={uniqueKey}>
+                  {subject.subject_code} [{subject.group_name}]
+                </option>
+              );
+            })}
           </select>
+          {selectedSubject && (() => {
+            const selectedSubjectData = subjects.find(s => `${s.subject_code}_${s.group_name}` === selectedSubject);
+            if (selectedSubjectData?.group_name) {
+              return (
+                <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    📌 Selected Group: <span className="font-bold text-purple-600 dark:text-purple-400">{selectedSubjectData.group_name}</span>
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    Viewing marks aggregated across all sessions of this subject
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {/* Search Bar */}
@@ -189,7 +260,9 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
           <table className="w-full">
             <thead>
               <tr className="border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Roll No.</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Student Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Group</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Email</th>
                 <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">ST1</th>
                 <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">ST2</th>
@@ -200,7 +273,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center">
+                  <td colSpan="8" className="px-6 py-12 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="text-gray-600 dark:text-gray-400">Loading marks...</span>
@@ -209,7 +282,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                 </tr>
               ) : filteredStudents.length > 0 ? (
                 filteredStudents.map((student) => {
-                  const editKey = `${selectedClass}-${student.studentId}`;
+                  const editKey = `${selectedSubject}-${student.studentId}`;
                   
                   // Helper function to render a mark cell
                   const renderMarkCell = (markValue) => {
@@ -240,6 +313,9 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                       key={editKey}
                       className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
+                      <td className="px-6 py-4 text-sm font-bold text-gray-900 dark:text-gray-100">
+                        {student.rollNumber}
+                      </td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -249,6 +325,11 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                           </div>
                           {student.studentName}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded text-xs font-bold">
+                          {student.studentGroup}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{student.studentEmail}</td>
                       <td className="px-6 py-4 text-center">

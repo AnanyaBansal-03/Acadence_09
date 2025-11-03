@@ -314,6 +314,101 @@ router.post("/upload-marks", verifyTeacher, async (req, res) => {
   }
 });
 
+// Upload marks in bulk for multiple class sessions (subject-based)
+router.post("/upload-marks-bulk", verifyTeacher, async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const { section, marksData } = req.body;
+
+    if (!section || !marksData || !Array.isArray(marksData)) {
+      return res.status(400).json({ message: "section and marksData array are required" });
+    }
+
+    // Map section to column name
+    const sectionColumns = {
+      'st1': 'st1_marks',
+      'st2': 'st2_marks',
+      'evaluation': 'evaluation_marks',
+      'end_term': 'end_term_marks'
+    };
+
+    const columnName = sectionColumns[section];
+    if (!columnName) {
+      return res.status(400).json({ message: "Invalid section. Must be: st1, st2, evaluation, or end_term" });
+    }
+
+    // Validate marks data structure
+    for (const item of marksData) {
+      if (!item.student_id || !item.class_id || item.marks === undefined) {
+        return res.status(400).json({ message: "Each entry must have student_id, class_id, and marks" });
+      }
+      if (item.marks < 0 || item.marks > 100) {
+        return res.status(400).json({ message: "Marks must be between 0 and 100" });
+      }
+    }
+
+    // Get all unique class IDs to verify teacher owns them
+    const classIds = [...new Set(marksData.map(m => m.class_id))];
+    const { data: classes, error: classError } = await supabase
+      .from("classes")
+      .select("id, teacher_id, name")
+      .in("id", classIds);
+
+    if (classError) throw classError;
+
+    // Verify teacher owns all classes
+    const unauthorizedClasses = classes.filter(c => c.teacher_id !== teacherId);
+    if (unauthorizedClasses.length > 0) {
+      return res.status(403).json({ 
+        message: "You don't have permission to upload marks for some of these classes",
+        unauthorizedClasses: unauthorizedClasses.map(c => c.name)
+      });
+    }
+
+    // Update marks in enrollments table for each entry
+    let updated = 0;
+    const errors = [];
+
+    for (const item of marksData) {
+      const updateData = {};
+      updateData[columnName] = parseFloat(item.marks);
+
+      const { data, error } = await supabase
+        .from("enrollments")
+        .update(updateData)
+        .eq("class_id", item.class_id)
+        .eq("student_id", item.student_id)
+        .select();
+
+      if (error) {
+        errors.push({ student_id: item.student_id, class_id: item.class_id, error: error.message });
+      } else if (data && data.length > 0) {
+        updated++;
+      }
+    }
+
+    if (errors.length > 0 && updated === 0) {
+      return res.status(500).json({
+        message: "All marks failed to update",
+        errors
+      });
+    }
+
+    res.json({
+      message: "Marks uploaded successfully",
+      uploaded: updated,
+      failed: errors.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (err) {
+    console.error("Error uploading marks:", err);
+    res.status(500).json({
+      message: "Error uploading marks",
+      error: err.message
+    });
+  }
+});
+
 // Get marks for a specific class
 router.get("/marks/:classId", verifyTeacher, async (req, res) => {
   try {

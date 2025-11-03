@@ -84,39 +84,68 @@ const StudentDashboard = () => {
       let assignments = [];
       let grades = [];
 
-      // Fetch courses (from 2nd code functionality) - filter by group
+      // Fetch courses - Group by subject instead of individual classes
       try {
         const { data: enrollmentData, error: enrollmentError } = await supabase
           .from('enrollments')
-          .select('class_id, classes(id, name, teacher_id, day_of_week, group_name)')
+          .select('class_id, classes(id, name, teacher_id, day_of_week, group_name, start_time, duration_hours, subject_code)')
           .eq('student_id', studentId);
 
         if (enrollmentError) {
           setError('Failed to load courses: ' + enrollmentError.message);
         } else {
-          // Filter classes by student's group
+          // Get all enrolled classes
           let allClasses = enrollmentData?.map(enrollment => enrollment.classes).filter(cls => cls !== null) || [];
           
-          // Only show classes that match student's group (or have no group assigned)
-          courses = allClasses.filter(cls => {
-            if (!studentGroup) return true; // If student has no group, show all
-            if (!cls.group_name) return true; // If class has no group, show to all
-            return cls.group_name === studentGroup; // Otherwise, match groups
+          // Filter by student's group
+          const filteredClasses = allClasses.filter(cls => {
+            if (!studentGroup) return true;
+            if (!cls.group_name) return true;
+            return cls.group_name === studentGroup;
           });
+
+          // Group by subject_code to show unique subjects
+          const subjectsMap = {};
+          filteredClasses.forEach(cls => {
+            const subjectCode = cls.subject_code || cls.name.split(' ')[0];
+            if (!subjectsMap[subjectCode]) {
+              subjectsMap[subjectCode] = {
+                id: cls.id, // Use first class id as representative
+                subject_code: subjectCode,
+                name: subjectCode,
+                teacher_id: cls.teacher_id,
+                group_name: cls.group_name,
+                sessions: [],
+                allClassIds: [] // Store all class IDs for this subject
+              };
+            }
+            subjectsMap[subjectCode].sessions.push({
+              id: cls.id,
+              day_of_week: cls.day_of_week,
+              start_time: cls.start_time,
+              duration_hours: cls.duration_hours
+            });
+            subjectsMap[subjectCode].allClassIds.push(cls.id);
+          });
+
+          // Convert to array - now courses represent subjects
+          courses = Object.values(subjectsMap);
+          
+          // Store all class IDs for attendance/grades queries
+          window._allEnrolledClassIds = filteredClasses.map(c => c.id);
         }
       } catch (err) {
         courses = [];
       }
 
-      // Fetch attendance (from 2nd code functionality)
-      if (courses.length > 0) {
+      // Fetch attendance - using all enrolled class IDs
+      if (window._allEnrolledClassIds && window._allEnrolledClassIds.length > 0) {
         try {
-          const classIds = courses.map(c => c.id);
           const { data: attendanceData } = await supabase
             .from('attendance')
             .select('*')
             .eq('student_id', studentId)
-            .in('class_id', classIds)
+            .in('class_id', window._allEnrolledClassIds)
             .order('date', { ascending: false });
           attendance = attendanceData || [];
         } catch (err) {

@@ -28,7 +28,7 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
         .from('enrollments')
         .select(`
           student_id,
-          users!enrollments_student_id_fkey (id, name, email)
+          users!enrollments_student_id_fkey (id, name, email, group_name)
         `)
         .eq('class_id', parseInt(selectedClass));
 
@@ -50,21 +50,34 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
         console.error('Error fetching attendance:', attendanceError);
       }
 
+      // Helper function to extract roll number from email
+      const getRollNumber = (email) => {
+        if (!email) return '9999';
+        const match = email.match(/(\d{4})(?:\.|@)/);
+        return match ? match[1] : '9999';
+      };
+
       // Combine student data with attendance status
       const records = enrollments?.map(enrollment => {
         const studentId = enrollment.users?.id || enrollment.student_id;
         const attendanceRecord = attendanceData?.find(a => a.student_id === studentId);
         const email = enrollment.users?.email || '';
         const name = enrollment.users?.name || (email ? email.split('@')[0] : 'Unknown');
+        const rollNumber = getRollNumber(email);
         
         return {
           id: studentId,
           studentName: name,
+          studentGroup: enrollment.users?.group_name || 'No Group',
+          rollNumber: rollNumber,
           status: attendanceRecord?.status || 'absent',
           time: attendanceRecord?.created_at ? new Date(attendanceRecord.created_at).toLocaleTimeString() : '-',
           attendanceId: attendanceRecord?.id
         };
       }) || [];
+
+      // Sort by roll number
+      records.sort((a, b) => a.rollNumber.localeCompare(b.rollNumber));
 
       setAttendanceRecords(records);
     } catch (error) {
@@ -284,10 +297,23 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
                 <option value="">Choose a class...</option>
                 {allClasses.map((cls) => (
                   <option key={cls.id} value={cls.id}>
-                    {cls.name} - {cls.day_of_week} {cls.schedule_time || cls.time}
+                    {cls.name} [{cls.group_name || 'No Group'}] - {cls.day_of_week} {cls.schedule_time || cls.time}
                   </option>
                 ))}
               </select>
+              {selectedClass && (() => {
+                const selectedClassData = allClasses.find(c => c.id === parseInt(selectedClass));
+                if (selectedClassData?.group_name) {
+                  return (
+                    <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        📌 Selected Group: <span className="font-bold text-purple-600">{selectedClassData.group_name}</span>
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Date Selection */}
@@ -385,7 +411,9 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
               <table className="w-full">
                 <thead>
                   <tr className="text-left text-gray-500 border-b border-gray-200">
+                    <th className="pb-3">Roll No.</th>
                     <th className="pb-3">Student Name</th>
+                    <th className="pb-3">Group</th>
                     <th className="pb-3">Status</th>
                     <th className="pb-3">Time</th>
                     <th className="pb-3">Actions</th>
@@ -394,14 +422,20 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan="4" className="py-8 text-center text-gray-500">
+                      <td colSpan="6" className="py-8 text-center text-gray-500">
                         Loading attendance records...
                       </td>
                     </tr>
                   ) : attendanceRecords.length > 0 ? (
                     attendanceRecords.map((record) => (
                       <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-3 text-gray-800 font-bold">{record.rollNumber}</td>
                         <td className="py-3 text-gray-800 font-medium">{record.studentName}</td>
+                        <td className="py-3">
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold">
+                            {record.studentGroup}
+                          </span>
+                        </td>
                         <td className="py-3">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
                             {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
@@ -423,7 +457,7 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="py-8 text-center text-gray-500">
+                      <td colSpan="6" className="py-8 text-center text-gray-500">
                         No students enrolled in this class yet.
                       </td>
                     </tr>

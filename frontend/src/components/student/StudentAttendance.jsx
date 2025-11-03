@@ -6,24 +6,28 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [showScanner, setShowScanner] = useState(false);
 
-  // Calculate attendance percentage for each course
+  // Calculate attendance percentage for each subject (aggregating all sessions)
   const calculateAttendanceStats = () => {
     const stats = {};
     
-    courses.forEach(course => {
-      const courseAttendance = attendance.filter(record => record.class_id === course.id);
+    courses.forEach(subject => {
+      // Get all class IDs for this subject
+      const classIds = subject.allClassIds || [subject.id];
+      
+      // Get attendance records from ALL sessions of this subject
+      const subjectAttendance = attendance.filter(record => classIds.includes(record.class_id));
       
       // Count unique dates instead of total records (to avoid counting duplicates)
       const uniqueDates = new Set(
-        courseAttendance.map(record => new Date(record.date).toISOString().split('T')[0])
+        subjectAttendance.map(record => new Date(record.date).toISOString().split('T')[0])
       );
       const totalDays = uniqueDates.size;
       
-      const presentCount = courseAttendance.filter(record => record.status === 'present').length;
+      const presentCount = subjectAttendance.filter(record => record.status === 'present').length;
       const percentage = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 0;
       
-      stats[course.id] = {
-        courseName: course.name,
+      stats[subject.id] = {
+        courseName: subject.subject_code || subject.name,
         total: totalDays,
         present: presentCount,
         absent: totalDays - presentCount,
@@ -45,13 +49,23 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
 
   const recentRecords = getRecentRecords();
 
-  // Filter records by selected course
+  // Filter records by selected subject (includes all class sessions)
   const filteredRecords = selectedCourse === 'all'
     ? recentRecords
-    : recentRecords.filter(record => record.class_id === parseInt(selectedCourse));
+    : (() => {
+        const selectedSubject = courses.find(c => c.id === parseInt(selectedCourse));
+        if (!selectedSubject) return [];
+        const classIds = selectedSubject.allClassIds || [selectedSubject.id];
+        return recentRecords.filter(record => classIds.includes(record.class_id));
+      })();
 
-  // Get course name by ID
+  // Get subject name by class ID (works with sessions within subjects)
   const getCourseName = (classId) => {
+    // Check if it's a session within a subject
+    const subject = courses.find(c => c.allClassIds && c.allClassIds.includes(classId));
+    if (subject) return subject.subject_code || subject.name;
+    
+    // Legacy: direct class match
     const course = courses.find(c => c.id === classId);
     return course?.name || 'Unknown Course';
   };
@@ -112,11 +126,11 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
         {/* Attendance Summary */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
-            Attendance Summary
+            Attendance by Subject
           </h3>
           {courses.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No courses enrolled yet
+              No subjects enrolled yet
             </p>
           ) : (
             <div className="space-y-4">
@@ -128,7 +142,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
                   <div key={course.id}>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {course.name}
+                        {course.subject_code || course.name}
                       </span>
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {stats.percentage}%
@@ -163,10 +177,10 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
               onChange={(e) => setSelectedCourse(e.target.value)}
               className="px-3 py-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
-              <option value="all">All Courses</option>
+              <option value="all">All Subjects</option>
               {courses.map(course => (
                 <option key={course.id} value={course.id}>
-                  {course.name}
+                  {course.subject_code || course.name}
                 </option>
               ))}
             </select>
