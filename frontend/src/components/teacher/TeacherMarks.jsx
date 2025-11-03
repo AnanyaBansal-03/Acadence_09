@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 const TeacherMarks = ({ allClasses, teacherName }) => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedSection, setSelectedSection] = useState('st1');
+  const [maxMarks, setMaxMarks] = useState(100);
   const [marksData, setMarksData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -166,9 +167,11 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
   };
 
   const handleMarkChange = (studentId, value) => {
+    const numValue = parseFloat(value);
+    const percentage = maxMarks > 0 ? (numValue / maxMarks) * 100 : 0;
     setMarksData(marksData.map(item =>
       item.student_id === studentId
-        ? { ...item, marks: value, grade: calculateGrade(value) }
+        ? { ...item, marks: value, grade: calculateGrade(percentage) }
         : item
     ));
   };
@@ -369,13 +372,33 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
           </div>
         </div>
 
+        {/* Max Marks Input */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Maximum Marks for {sections.find(s => s.value === selectedSection)?.label}
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              value={maxMarks}
+              onChange={(e) => setMaxMarks(parseInt(e.target.value) || 100)}
+              min="1"
+              placeholder="Enter max marks"
+              className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <span className="text-sm text-gray-600">
+              (Students will be marked out of {maxMarks})
+            </span>
+          </div>
+        </div>
+
         {selectedSubject && (
           <>
             {/* Marks Table */}
             <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50 mb-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  {sections.find(s => s.value === selectedSection)?.label} Marks
+                  {sections.find(s => s.value === selectedSection)?.label} Marks (Out of {maxMarks})
                   {loading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
                 </h3>
                 <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
@@ -390,7 +413,7 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                       <th className="pb-3 px-4">Student Name</th>
                       <th className="pb-3 px-4">Group</th>
                       <th className="pb-3 px-4">Email</th>
-                      <th className="pb-3 px-4">Marks (0-100)</th>
+                      <th className="pb-3 px-4">Marks</th>
                       <th className="pb-3 px-4">Grade</th>
                     </tr>
                   </thead>
@@ -407,16 +430,16 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                           </td>
                           <td className="py-3 px-4 text-gray-600">{item.student_email}</td>
                           <td className="py-3 px-4">
-                            <select
+                            <input
+                              type="number"
                               value={item.marks}
                               onChange={(e) => handleMarkChange(item.student_id, e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            >
-                              <option value="">Select marks...</option>
-                              {Array.from({ length: 101 }, (_, i) => i).map(mark => (
-                                <option key={mark} value={mark}>{mark}</option>
-                              ))}
-                            </select>
+                              placeholder={`/ ${maxMarks}`}
+                              min="0"
+                              max={maxMarks}
+                              step="0.5"
+                              className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${

@@ -195,17 +195,21 @@ router.post("/enrollments/subject", verifyAdmin, async (req, res) => {
     }
 
     // Get all classes for this subject and group
-    const { data: subjectClasses, error: classError } = await supabase
+    // Try subject_code first, fallback to matching class name prefix
+    let query = supabase
       .from("classes")
-      .select("id, name, day_of_week")
-      .eq("subject_code", subject_code)
-      .eq("group_name", group_name);
+      .select("id, name, day_of_week, subject_code");
+    
+    // First try exact subject_code match
+    const { data: subjectClasses, error: classError } = await query
+      .eq("group_name", group_name)
+      .or(`subject_code.eq.${subject_code},name.ilike.${subject_code}%`);
 
     if (classError) throw classError;
 
     if (!subjectClasses || subjectClasses.length === 0) {
       return res.status(404).json({ 
-        message: `No classes found for subject ${subject_code} in group ${group_name}` 
+        message: `No classes found for subject ${subject_code} in group ${group_name}. Please ensure the subject_code field is populated in the database by running the migration script.` 
       });
     }
 

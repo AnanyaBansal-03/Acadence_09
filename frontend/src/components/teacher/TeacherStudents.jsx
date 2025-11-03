@@ -57,7 +57,7 @@ const TeacherStudents = ({ allStudents, allClasses }) => {
               >
                 {allClasses.map((cls) => (
                   <option key={cls.id} value={cls.id}>
-                    {cls.name} - {cls.day_of_week} {cls.schedule_time}
+                    {cls.subject_code || cls.name.split(' ')[0]} ({cls.group_name || 'No Group'})
                   </option>
                 ))}
               </select>
