@@ -64,15 +64,18 @@ const TimetableView = ({ courses }) => {
           const startTime = session.start_time;
           const day = session.day_of_week?.toLowerCase();
           
-          if (startTime && day) {
+          if (startTime && day && daysOrder.includes(day)) {
             const endTime = calculateEndTime(startTime, session.duration_hours || 1);
             
             if (endTime) {
               timeSlots.forEach(slot => {
                 if (isTimeInRange(slot, startTime, endTime)) {
                   timetable[day][slot].push({
-                    ...course,
                     id: session.id,
+                    name: course.name || course.subject_code, // Use subject name
+                    subject_code: course.subject_code,
+                    group_name: course.group_name,
+                    teacher_id: course.teacher_id,
                     start_time: startTime,
                     day_of_week: session.day_of_week,
                     duration_hours: session.duration_hours,
