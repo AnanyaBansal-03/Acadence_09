@@ -1,6 +1,8 @@
 ﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL } from "../lib/apiConfig";
+
 
 export default function AuthCard() {
   const [isSignup, setIsSignup] = useState(false);
@@ -38,7 +40,7 @@ export default function AuthCard() {
     setShowResendVerification(false);
 
     try {
-      const res = await axios.post("https://acadence-backend.onrender.com/api/auth/login", loginData);
+      const res = await axios.post(`${API_URL}/auth/login`, loginData)
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("userId", res.data.id);
@@ -67,9 +69,7 @@ export default function AuthCard() {
   const handleResendVerification = async () => {
     setResendLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/resend-verification", {
-        email: resendEmail
-      });
+      const res = await axios.post(`${API_URL}/auth/resend-verification`, { email: resendEmail });
       alert(res.data.message);
       setShowResendVerification(false);
     } catch (error) {
@@ -92,7 +92,7 @@ export default function AuthCard() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/signup", signupData);
+      const res = await axios.post(`${API_URL}/auth/signup`, signupData);
       alert("Signup successful! Please login.");
       setIsSignup(false);
       setSignupData({
