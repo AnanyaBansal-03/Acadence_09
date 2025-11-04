@@ -38,7 +38,7 @@ export default function AuthCard() {
     setShowResendVerification(false);
 
     try {
-      const res = await axios.post("https://acadence-backend.onrender.com", loginData);
+      const res = await axios.post("https://acadence-backend.onrender.com/api/auth/login", loginData);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("userId", res.data.id);
