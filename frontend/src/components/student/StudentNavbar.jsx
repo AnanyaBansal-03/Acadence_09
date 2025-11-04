@@ -1,4 +1,5 @@
 import React from 'react';
+import StudentNotifications from './StudentNotifications';
 
 const StudentNavbar = ({ studentData, darkMode, toggleTheme, profileOpen, setProfileOpen, handleLogout, setSidebarOpen }) => {
   return (
@@ -23,6 +24,9 @@ const StudentNavbar = ({ studentData, darkMode, toggleTheme, profileOpen, setPro
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <StudentNotifications />
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}

@@ -98,13 +98,50 @@ const AdminEnrollments = ({ initialEnrollments = [], initialUsers = [], initialC
       setShowModal(false);
       alert('Enrollment created successfully!');
       if (onDataRefresh) onDataRefresh();
-    } catch (err) {
-      console.error('Error creating enrollment:', err);
-      alert('Failed to enroll student: ' + err.message);
+    } catch (error) {
+      console.error('Error creating enrollment:', error);
+      alert(error.message || 'Failed to create enrollment');
     } finally {
       setIsCreating(false);
     }
   };
+
+  // Group enrollments by student and subject
+  const getGroupedEnrollments = () => {
+    const grouped = {};
+    
+    enrollments.forEach(enrollment => {
+      const studentId = enrollment.student_id;
+      const subjectCode = enrollment.classes?.subject_code || enrollment.classes?.name?.split(' ')[0];
+      const groupName = enrollment.classes?.group_name;
+      const key = `${studentId}_${subjectCode}_${groupName}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = {
+          id: enrollment.id, // Use first enrollment ID for deletion
+          student_id: studentId,
+          student_name: enrollment.users?.name,
+          student_email: enrollment.users?.email,
+          subject_code: subjectCode,
+          subject_name: subjectCode,
+          group_name: groupName,
+          created_at: enrollment.created_at,
+          enrollment_ids: [enrollment.id] // Track all enrollment IDs for this subject
+        };
+      } else {
+        // Add this enrollment ID to the list
+        grouped[key].enrollment_ids.push(enrollment.id);
+        // Use earliest enrollment date
+        if (new Date(enrollment.created_at) < new Date(grouped[key].created_at)) {
+          grouped[key].created_at = enrollment.created_at;
+        }
+      }
+    });
+    
+    return Object.values(grouped);
+  };
+
+  const groupedEnrollments = getGroupedEnrollments();
 
   const handleBulkEnrollment = async (e) => {
     e.preventDefault();
@@ -181,26 +218,34 @@ ${result.details.classes.join('\n')}
     }));
   };
 
-  const handleDeleteEnrollment = async (enrollmentId) => {
-    if (!window.confirm('Are you sure you want to unenroll this student?')) return;
+  const handleDeleteEnrollment = async (enrollmentId, enrollmentIds = [enrollmentId]) => {
+    const count = enrollmentIds.length;
+    if (!window.confirm(`Are you sure you want to unenroll this student from this subject? This will remove ${count} class enrollment(s).`)) return;
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/enrollments/${enrollmentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const result = await response.json();
       
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to unenroll student');
+      // Delete all enrollments for this subject
+      const deletePromises = enrollmentIds.map(id =>
+        fetch(`http://localhost:5000/api/admin/enrollments/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+      );
+
+      const responses = await Promise.all(deletePromises);
+      
+      // Check if any failed
+      const failedResponses = responses.filter(r => !r.ok);
+      if (failedResponses.length > 0) {
+        throw new Error('Failed to unenroll from some classes');
       }
 
-      setEnrollments(enrollments.filter(e => e.id !== enrollmentId));
-      alert('Student unenrolled successfully!');
+      // Remove all deleted enrollments from state
+      setEnrollments(enrollments.filter(e => !enrollmentIds.includes(e.id)));
+      alert(`Student unenrolled successfully from all ${count} class(es)!`);
       if (onDataRefresh) onDataRefresh();
     } catch (err) {
       console.error('Error deleting enrollment:', err);
@@ -246,23 +291,23 @@ ${result.details.classes.join('\n')}
               </tr>
             </thead>
             <tbody>
-              {enrollments.map((enrollment) => (
-                <tr key={enrollment.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+              {groupedEnrollments.map((enrollment) => (
+                <tr key={`${enrollment.student_id}_${enrollment.subject_code}_${enrollment.group_name}`} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium">
-                    {enrollment.users?.name || 'Unknown'}
+                    {enrollment.student_name || 'Unknown'}
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                    {enrollment.users?.email || 'N/A'}
+                    {enrollment.student_email || 'N/A'}
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                    {enrollment.classes?.name || 'N/A'}
+                    {enrollment.subject_code} {enrollment.group_name ? `(${enrollment.group_name})` : ''}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                     {new Date(enrollment.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => handleDeleteEnrollment(enrollment.id)}
+                      onClick={() => handleDeleteEnrollment(enrollment.id, enrollment.enrollment_ids)}
                       className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors"
                     >
                       Unenroll
@@ -274,7 +319,7 @@ ${result.details.classes.join('\n')}
           </table>
         </div>
 
-        {enrollments.length === 0 && (
+        {groupedEnrollments.length === 0 && (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             No enrollments yet
           </div>
@@ -283,16 +328,16 @@ ${result.details.classes.join('\n')}
         {/* Stats */}
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total Enrollments</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{enrollments.length}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Subject Enrollments</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{groupedEnrollments.length}</p>
           </div>
           <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400">Enrolled Students</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{new Set(enrollments.map(e => e.student_id)).size}</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{new Set(groupedEnrollments.map(e => e.student_id)).size}</p>
           </div>
           <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Classes</p>
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{new Set(enrollments.map(e => e.class_id)).size}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total Class Sessions</p>
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{enrollments.length}</p>
           </div>
         </div>
       </div>
@@ -478,12 +523,23 @@ ${result.details.classes.join('\n')}
                     )
                   : filteredStudents;
 
-                // Get already enrolled students for ANY class of this subject
-                const enrolledStudentIds = new Set(
-                  enrollments
-                    .filter(e => subjectClasses.some(c => c.id === e.class_id))
-                    .map(e => e.student_id)
-                );
+                // Get students who are enrolled in ALL classes of this subject+group
+                // A student is "enrolled" only if they're in ALL sessions
+                const enrolledStudentIds = new Set();
+                students.forEach(student => {
+                  const enrolledClassIds = enrollments
+                    .filter(e => e.student_id === student.id)
+                    .map(e => e.class_id);
+                  
+                  // Check if student is enrolled in ALL classes of this subject
+                  const isFullyEnrolled = subjectClasses.every(cls => 
+                    enrolledClassIds.includes(cls.id)
+                  );
+                  
+                  if (isFullyEnrolled) {
+                    enrolledStudentIds.add(student.id);
+                  }
+                });
 
                 // Group students by group_name
                 const groupedStudents = searchFilteredStudents.reduce((acc, student) => {

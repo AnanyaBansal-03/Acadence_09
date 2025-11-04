@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import StudentAttendance from '../components/student/StudentAttendance';
 import StudentGrades from '../components/student/StudentGrades';
 import StudentCourses from '../components/student/StudentCourses';
+import StudentNotifications from '../components/student/StudentNotifications';
 
 const StudentDashboard = () => {
   const [activeFeature, setActiveFeature] = useState('home');
@@ -347,6 +348,9 @@ const Navbar = ({ onHomeClick, showHomeButton, studentData, onLogout, profileOpe
     </div>
    
     <div className="flex gap-3 items-center relative">
+      {/* Notification Bell */}
+      <StudentNotifications />
+      
       <button
         onClick={onLogout}
         className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"

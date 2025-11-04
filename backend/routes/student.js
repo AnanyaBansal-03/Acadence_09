@@ -3,6 +3,12 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const supabase = require("../db");
+const { 
+  calculateStudentAttendance, 
+  categorizeRisk, 
+  generateAIMessage,
+  sendEmailNotification
+} = require('../services/notificationService');
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
@@ -76,6 +82,16 @@ router.post("/mark-attendance", verifyToken, async (req, res) => {
       console.error("Error inserting attendance:", error);
       throw error;
     }
+
+    // Trigger automatic notification generation after attendance is marked
+    // Run in background to not delay response
+    setTimeout(async () => {
+      try {
+        await generateNotificationForStudent(studentId);
+      } catch (err) {
+        console.error('Background notification generation failed:', err);
+      }
+    }, 100);
 
     res.json({
       message: "Attendance marked successfully",
@@ -170,5 +186,87 @@ router.get("/marks", verifyToken, async (req, res) => {
     });
   }
 });
+
+// Helper function to generate notifications for a student
+async function generateNotificationForStudent(studentId) {
+  try {
+    // Get student details
+    const { data: student, error: studentError } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', studentId)
+      .single();
+
+    if (studentError) throw studentError;
+
+    // Calculate attendance for all subjects
+    const attendanceStats = await calculateStudentAttendance(studentId);
+
+    // Generate notifications only for critical and warning cases
+    for (const stat of attendanceStats) {
+      const risk = categorizeRisk(stat.percentage);
+      
+      // Only generate for critical and warning levels to avoid spam
+      if (risk.level !== 'critical' && risk.level !== 'warning') {
+        continue;
+      }
+
+      // Generate AI message
+      const message = await generateAIMessage({
+        studentName: student.name,
+        subjectCode: stat.subject_code,
+        subjectName: stat.subject_name,
+        percentage: stat.percentage,
+        riskLevel: risk.level,
+        absentDays: stat.absentDays,
+        totalDays: stat.totalDays
+      });
+
+      // Check if similar notification exists in last 24 hours
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentNotif } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('student_id', studentId)
+        .eq('subject_code', stat.subject_code)
+        .eq('type', risk.level)
+        .gte('created_at', oneDayAgo)
+        .single();
+
+      if (recentNotif) continue; // Skip if already notified recently
+
+      // Insert notification to database
+      await supabase
+        .from('notifications')
+        .insert({
+          student_id: studentId,
+          subject_code: stat.subject_code,
+          subject_name: stat.subject_name,
+          message: message,
+          type: risk.level,
+          attendance_percentage: stat.percentage,
+          is_read: false
+        });
+
+      // Send email notification (async, don't wait)
+      sendEmailNotification({
+        studentEmail: student.email,
+        studentName: student.name,
+        subjectCode: stat.subject_code,
+        subjectName: stat.subject_name,
+        percentage: stat.percentage,
+        riskLevel: risk.level,
+        absentDays: stat.absentDays,
+        totalDays: stat.totalDays
+      }).catch(err => {
+        console.error(`Failed to send email for ${stat.subject_code}:`, err);
+      });
+    }
+
+    console.log(`✅ Generated notifications for student ${studentId}`);
+  } catch (error) {
+    console.error('Error generating notifications:', error);
+  }
+}
 
 module.exports = router;

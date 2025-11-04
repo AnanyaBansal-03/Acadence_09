@@ -4,6 +4,8 @@ const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const studentRoutes = require("./routes/student");
 const teacherRoutes = require("./routes/teacher");
+const notificationRoutes = require("./routes/notifications");
+const { initializeWeeklyScheduler } = require("./services/weeklyScheduler");
 require("dotenv").config();
 const supabase = require("./db"); // ✅ This is now Supabase
 
@@ -52,6 +54,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/teacher", teacherRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ✅ ADD THESE ROUTES:
 app.get('/', (req, res) => {
@@ -216,4 +219,12 @@ app.get('/api/dashboard/teacher/:teacherId', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  
+  // Initialize weekly attendance scheduler (FREE - No API keys needed!)
+  console.log('\n📅 Initializing weekly attendance notification scheduler...');
+  initializeWeeklyScheduler();
+  console.log('💡 Tip: Use GET /api/notifications/test-weekly-email to test emails');
+});
