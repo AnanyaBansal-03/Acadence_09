@@ -2,22 +2,32 @@ const cron = require('node-cron');
 const supabase = require('../db');
 const { generateWeeklyAttendanceAdvice, generateEmailSubject } = require('./openaiService');
 
-// Use Resend if configured, otherwise fall back to nodemailer
+// Use Resend if configured, Gmail if configured, otherwise fall back to nodemailer
 let sendEmailFunction;
+let emailServiceName;
+
 try {
-  if (process.env.EMAIL_SERVICE === 'resend' && process.env.RESEND_API_KEY) {
+  if (process.env.EMAIL_SERVICE === 'gmail' && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    const { sendWeeklyAttendanceEmailGmail } = require('./gmailService');
+    sendEmailFunction = sendWeeklyAttendanceEmailGmail;
+    emailServiceName = 'Gmail SMTP';
+    console.log('📧 Using Gmail SMTP for email delivery');
+  } else if (process.env.EMAIL_SERVICE === 'resend' && process.env.RESEND_API_KEY) {
     const { sendWeeklyAttendanceEmailResend } = require('./resendService');
     sendEmailFunction = sendWeeklyAttendanceEmailResend;
+    emailServiceName = 'Resend';
     console.log('📧 Using Resend for email delivery');
   } else {
     const { sendWeeklyAttendanceEmail } = require('./emailService');
     sendEmailFunction = sendWeeklyAttendanceEmail;
+    emailServiceName = 'Nodemailer (Brevo)';
     console.log('📧 Using Nodemailer for email delivery');
   }
 } catch (error) {
   console.warn('⚠️ Email service initialization:', error.message);
   const { sendWeeklyAttendanceEmail } = require('./emailService');
   sendEmailFunction = sendWeeklyAttendanceEmail;
+  emailServiceName = 'Nodemailer (Brevo)';
 }
 
 /**
@@ -74,23 +84,15 @@ async function sendWeeklyAttendanceNotifications() {
     
     console.log(`📊 Processing ${students.length} students...`);
     
-    // 🧪 TEST MODE: Only send to specific email
-    const TEST_EMAIL = 'yanasobti@gmail.com'; // Testing with Gmail
-    console.log(`🧪 TEST MODE: Only sending emails to ${TEST_EMAIL}`);
+    // 🚀 PRODUCTION MODE: Send to all students with <75% attendance
+    console.log(`🚀 PRODUCTION MODE: Sending emails to students with <75% attendance`);
     
     let emailsSent = 0;
     let emailsSkipped = 0;
     
     for (const student of students) {
       try {
-        // 🧪 FILTER: Skip students who aren't the test email
-        if (student.email !== TEST_EMAIL) {
-          console.log(`⏭️ Skipping ${student.name} (${student.email}) - not test email`);
-          emailsSkipped++;
-          continue;
-        }
-        
-        console.log(`\n📧 Processing TEST student: ${student.name} (${student.email})`);
+        console.log(`\n📧 Processing student: ${student.name} (${student.email})`);
         
         // Get all enrollments for this student with class details
         const { data: enrollments, error: enrollError } = await supabase
@@ -172,25 +174,17 @@ async function sendWeeklyAttendanceNotifications() {
         });
         
         // Filter subjects that need attention (below 80% - buffer above 75%)
-        const subjectsNeedingAttention = subjects.filter(s => s.attendance_percentage < 80);
+        // Filter subjects needing attention (<75% attendance)
+        const subjectsNeedingAttention = subjects.filter(s => s.attendance_percentage < 75);
         
-        // 🧪 TEST MODE: Force send email even if attendance is good
-        const FORCE_TEST_EMAIL = true; // Set to false in production
-        
-        if (subjectsNeedingAttention.length === 0 && !FORCE_TEST_EMAIL) {
-          console.log(`✅ ${student.name}: All subjects above 80% - skipping email`);
+        // 🚀 PRODUCTION: Only send if student has subjects below 75%
+        if (subjectsNeedingAttention.length === 0) {
+          console.log(`✅ ${student.name}: All subjects at or above 75% - skipping email`);
           emailsSkipped++;
           continue;
         }
         
-        // 🧪 For testing: If no subjects need attention, use all subjects for demo
-        const subjectsToShow = subjectsNeedingAttention.length > 0 
-          ? subjectsNeedingAttention 
-          : subjects.slice(0, 2); // Show first 2 subjects as demo
-        
-        if (FORCE_TEST_EMAIL && subjectsNeedingAttention.length === 0) {
-          console.log(`🧪 TEST: ${student.name} has good attendance (all above 80%), but sending demo email anyway`);
-        }
+        console.log(`⚠️ ${student.name}: ${subjectsNeedingAttention.length} subject(s) below 75% attendance`);
         
         // Generate AI message
         const currentWeek = new Date().toLocaleDateString('en-US', { 
@@ -201,7 +195,7 @@ async function sendWeeklyAttendanceNotifications() {
         
         const aiMessage = await generateWeeklyAttendanceAdvice({
           studentName: student.name,
-          subjects: subjectsToShow, // Use subjectsToShow instead of subjectsNeedingAttention
+          subjects: subjectsNeedingAttention,
           currentWeek
         });
         
@@ -211,10 +205,8 @@ async function sendWeeklyAttendanceNotifications() {
           continue;
         }
         
-        // Generate email subject (use subjectsToShow for test mode)
-        const emailSubject = FORCE_TEST_EMAIL && subjectsNeedingAttention.length === 0
-          ? `📊 Your Weekly Attendance Update - Test Email`
-          : generateEmailSubject(subjectsNeedingAttention);
+        // Generate email subject
+        const emailSubject = generateEmailSubject(subjectsNeedingAttention);
         
         // Send email
         await sendEmailFunction(
@@ -222,14 +214,14 @@ async function sendWeeklyAttendanceNotifications() {
           student.name,
           emailSubject,
           aiMessage,
-          subjectsToShow // Use subjectsToShow instead of subjectsNeedingAttention
+          subjectsNeedingAttention
         );
         
         console.log(`✅ Sent email to ${student.name} (${student.email})`);
         emailsSent++;
         
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
       } catch (error) {
         console.error(`❌ Error processing student ${student.name}:`, error);
