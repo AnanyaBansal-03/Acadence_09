@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import StudentAttendance from '../components/student/StudentAttendance';
 import StudentGrades from '../components/student/StudentGrades';
 import StudentCourses from '../components/student/StudentCourses';
-import StudentNotifications from '../components/student/StudentNotifications';
 
 const StudentDashboard = () => {
   const [activeFeature, setActiveFeature] = useState('home');
@@ -348,9 +347,6 @@ const Navbar = ({ onHomeClick, showHomeButton, studentData, onLogout, profileOpe
     </div>
    
     <div className="flex gap-3 items-center relative">
-      {/* Notification Bell */}
-      <StudentNotifications />
-      
       <button
         onClick={onLogout}
         className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
@@ -362,75 +358,66 @@ const Navbar = ({ onHomeClick, showHomeButton, studentData, onLogout, profileOpe
       <div className="relative">
         <button
           onClick={toggleProfile}
-          className="profile-button w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-0.5 shadow-lg hover:shadow-xl transition-all duration-200"
+          className="profile-button w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
         >
-          <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-sm font-bold text-blue-600">
-            {studentData?.name?.charAt(0)?.toUpperCase() || 'S'}
-          </div>
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
         </button>
 
         {/* Profile Dropdown */}
         {profileOpen && studentData && (
-          <div className="profile-dropdown absolute right-0 top-12 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/50 z-50 overflow-hidden">
+          <div className="profile-dropdown absolute right-0 top-12 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
             <div className="p-6">
               {/* Profile Header */}
               <div className="text-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 mx-auto mb-4">
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-                    className="w-full h-full rounded-full bg-white object-cover"
-                    alt="profile"
-                  />
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
                 </div>
                 <h2 className="text-xl font-bold text-gray-800">{studentData.name}</h2>
-                <p className="text-gray-600">{studentData.email}</p>
-                <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mt-2">
-                  {studentData.studentId}
-                </div>
+                <p className="text-sm text-gray-600 mt-1">{studentData.email}</p>
+                {studentData.group_name && (
+                  <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mt-2">
+                    Group: {studentData.group_name}
+                  </div>
+                )}
               </div>
 
               {/* Profile Details */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3 border-t border-gray-200 pt-4">
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase">Department</label>
-                    <p className="text-sm text-gray-800">{studentData.department}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase">Semester</label>
-                    <p className="text-sm text-gray-800">{studentData.semester}</p>
+                    <p className="text-xs text-gray-500">Roll Number</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {studentData.email?.match(/\d{4}/)?.[0] || 'N/A'}
+                    </p>
                   </div>
                 </div>
-               
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Joined</label>
-                  <p className="text-sm text-gray-800">{studentData.joinDate}</p>
-                </div>
-               
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Phone</label>
-                  <p className="text-sm text-gray-800">{studentData.phone}</p>
-                </div>
-               
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Address</label>
-                  <p className="text-sm text-gray-800">{studentData.address}</p>
-                </div>
-               
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Date of Birth</label>
-                  <p className="text-sm text-gray-800">{studentData.dateOfBirth}</p>
-                </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3 mt-6">
-                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
-                  Edit Profile
-                </button>
-                <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all text-sm font-medium">
-                  Settings
-                </button>
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-sm font-medium text-gray-800">{studentData.email}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500">Role</p>
+                    <p className="text-sm font-medium text-gray-800">Student</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

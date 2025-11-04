@@ -428,79 +428,59 @@ const Navbar = ({ onHomeClick, showHomeButton, teacherData, onLogout, profileOpe
       <div className="relative">
         <button 
           onClick={toggleProfile}
-          className="profile-button w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-0.5 shadow-lg hover:shadow-xl transition-all duration-200"
+          className="profile-button w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
         >
-          <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-sm font-bold text-blue-600">
-            {teacherData?.name?.charAt(0)?.toUpperCase() || 'T'}
-          </div>
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
         </button>
 
         {/* Profile Dropdown */}
         {profileOpen && teacherData && (
-          <div className="profile-dropdown absolute right-0 top-12 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/50 z-50 overflow-hidden">
+          <div className="profile-dropdown absolute right-0 top-12 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
             <div className="p-6">
               {/* Profile Header */}
               <div className="text-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 mx-auto mb-4">
-                  <img 
-                    src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" 
-                    className="w-full h-full rounded-full bg-white object-cover" 
-                    alt="profile" 
-                  />
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
                 </div>
                 <h2 className="text-xl font-bold text-gray-800">{teacherData.name}</h2>
-                <p className="text-gray-600">{teacherData.email}</p>
-                <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mt-2">
-                  {teacherData.teacherId}
-                </div>
-              </div>
-{/* Profile Details */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase">Department</label>
-                    <p className="text-sm text-gray-800">{teacherData.department}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase">Designation</label>
-                    <p className="text-sm text-gray-800">{teacherData.designation}</p>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Specialization</label>
-                  <p className="text-sm text-gray-800">{teacherData.specialization}</p>
-                </div>
-                
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Office</label>
-                  <p className="text-sm text-gray-800">{teacherData.office}</p>
-                </div>
-                
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Office Hours</label>
-                  <p className="text-sm text-gray-800">{teacherData.officeHours}</p>
-                </div>
-                
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Phone</label>
-                  <p className="text-sm text-gray-800">{teacherData.phone}</p>
-                </div>
-                
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase">Joined</label>
-                  <p className="text-sm text-gray-800">{teacherData.joinDate}</p>
-                </div>
+                <p className="text-sm text-gray-600 mt-1">{teacherData.email}</p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3 mt-6">
-                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
-                  Edit Profile
-                </button>
-                <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all text-sm font-medium">
-                  Settings
-                </button>
+              {/* Profile Details */}
+              <div className="space-y-3 border-t border-gray-200 pt-4">
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500">Teacher ID</p>
+                    <p className="text-sm font-medium text-gray-800">{teacherData.teacherId}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-sm font-medium text-gray-800">{teacherData.email}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500">Role</p>
+                    <p className="text-sm font-medium text-gray-800">Teacher</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
