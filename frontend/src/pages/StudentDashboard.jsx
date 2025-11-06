@@ -290,7 +290,7 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 min-h-screen">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 min-h-screen flex flex-col">
       {/* Exact Navbar from 1st code */}
       <Navbar
         onHomeClick={handleHomeClick}
@@ -301,25 +301,16 @@ const StudentDashboard = () => {
         toggleProfile={toggleProfile}
       />
      
-      {/* Sidebar - Hidden on mobile, visible on desktop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
-      <div className="hidden lg:block">
-        <Sidebar
-          isOpen={sidebarOpen}
-          activeFeature={activeFeature}
-          onFeatureClick={handleFeatureClick}
-          onClose={() => setSidebarOpen(false)}
-        />
-      </div>
+      {/* Exact Sidebar from 1st code */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        activeFeature={activeFeature}
+        onFeatureClick={handleFeatureClick}
+        onClose={() => setSidebarOpen(false)}
+      />
      
-      <main className="min-h-screen pt-20 md:pt-24 px-0">
-        <div className="container mx-auto px-4 md:px-6 py-6">
+      <main className="flex-1 flex items-center justify-center pt-20 pb-8 px-6">
+        <div className="w-full max-w-6xl">
           {renderFeatureContent()}
         </div>
       </main>
