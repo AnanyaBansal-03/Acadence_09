@@ -136,11 +136,6 @@ async function processBatch(batch, batchNumber, totalBatches) {
   return batchResults;
 }
 
-/**
- * Process a single student
- */
-async function processStudent(student) {
-
 async function sendAttendanceEmails() {
   try {
     console.log('\n🚀 Starting attendance email campaign...\n');
