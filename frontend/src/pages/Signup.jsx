@@ -8,7 +8,7 @@ function Signup() {
     name: "",
     email: "",
     password: "",
-    role: "",
+    role: "student", // Default to student
   });
   const [err, setErr] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -31,7 +31,7 @@ function Signup() {
       
       // Show success message
       setSuccessMessage(res.data.message);
-      setFormData({ name: "", email: "", password: "", role: "" });
+      setFormData({ name: "", email: "", password: "", role: "student" });
       
       // Redirect to login after 5 seconds
       setTimeout(() => {
@@ -87,19 +87,9 @@ function Signup() {
               required
               className="border-gray-300 border p-3 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-             <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className={`border border-gray-300 p-3 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-blue-500
-            ${formData.role === "" ? "text-gray-500" : "text-black"}`}
-            >
-            <option value="" disabled hidden>
-            Select Role
-            </option>
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-            </select>
+            
+            {/* Hidden field - always student */}
+            <input type="hidden" name="role" value="student" />
 
             {err && (
               <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-xl text-center">

@@ -22,6 +22,17 @@ const TeacherSidebar = ({ sidebarOpen, setSidebarOpen, currentFeature, handleFea
     }
   ];
 
+  // Auto-hide sidebar on mobile after clicking a menu item
+  const handleMenuClick = (action) => {
+    action();
+    // Auto-hide after 1.5 seconds on mobile
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        setSidebarOpen(false);
+      }, 1500);
+    }
+  };
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -34,7 +45,7 @@ const TeacherSidebar = ({ sidebarOpen, setSidebarOpen, currentFeature, handleFea
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-40 ${
+        className={`fixed left-0 top-14 md:top-16 h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-40 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
@@ -42,7 +53,7 @@ const TeacherSidebar = ({ sidebarOpen, setSidebarOpen, currentFeature, handleFea
           {/* Home Button */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <button
-              onClick={handleHomeClick}
+              onClick={() => handleMenuClick(handleHomeClick)}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 currentFeature === 'home'
                   ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
@@ -62,7 +73,7 @@ const TeacherSidebar = ({ sidebarOpen, setSidebarOpen, currentFeature, handleFea
               {features.map((feature) => (
                 <button
                   key={feature.id}
-                  onClick={() => handleFeatureClick(feature.id)}
+                  onClick={() => handleMenuClick(() => handleFeatureClick(feature.id))}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     currentFeature === feature.id
                       ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'

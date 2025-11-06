@@ -301,16 +301,27 @@ const StudentDashboard = () => {
         toggleProfile={toggleProfile}
       />
      
-      {/* Exact Sidebar from 1st code */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        activeFeature={activeFeature}
-        onFeatureClick={handleFeatureClick}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      <div className="hidden lg:block">
+        <Sidebar
+          isOpen={sidebarOpen}
+          activeFeature={activeFeature}
+          onFeatureClick={handleFeatureClick}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
      
-      <main className="flex items-center justify-center min-h-screen pt-24 px-6">
-        {renderFeatureContent()}
+      <main className="min-h-screen pt-20 md:pt-24 px-0">
+        <div className="container mx-auto px-4 md:px-6 py-6">
+          {renderFeatureContent()}
+        </div>
       </main>
     </div>
   );
@@ -470,6 +481,7 @@ const Sidebar = ({ isOpen, activeFeature, onFeatureClick, onClose }) => {
     <aside
       id="sidebar"
       className={`fixed left-0 top-16 h-full w-80 bg-white/95 backdrop-blur-md border-r border-gray-200/50 p-6 transform transition-transform duration-300 z-40 shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-3">Navigation</h2>

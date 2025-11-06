@@ -116,15 +116,16 @@ const TimetableView = ({ courses }) => {
   const timetableData = getTimetableData();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-      <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <h3 className="text-lg md:text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
         <span>📅</span> Your Weekly Timetable
       </h3>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-[800px]">
+      {/* Mobile: Full width scroll | Desktop: Normal table */}
+      <div className="overflow-x-auto md:overflow-x-visible">
+        <table className="w-full border-collapse min-w-[800px] md:min-w-0">
           <thead>
             <tr className="bg-gradient-to-r from-blue-500 to-purple-600">
-              <th className="border border-gray-300 dark:border-gray-600 px-3 py-3 text-left text-sm font-semibold text-white sticky left-0 bg-gradient-to-r from-blue-500 to-blue-600">
+              <th className="border border-gray-300 dark:border-gray-600 px-3 py-3 text-left text-sm font-semibold text-white sticky left-0 bg-gradient-to-r from-blue-500 to-blue-600 md:static">
                 Time
               </th>
               {daysOrder.map(day => (
@@ -135,11 +136,11 @@ const TimetableView = ({ courses }) => {
             </tr>
           </thead>
           <tbody>
-            {timeSlots.map(time => (
-              <tr key={time} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <td className="border border-gray-300 dark:border-gray-600 px-3 py-3 font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 sticky left-0">
-                  {time}
-                </td>
+                {timeSlots.map(time => (
+                  <tr key={time} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="border border-gray-300 dark:border-gray-600 px-3 py-3 font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 sticky left-0 md:static">
+                      {time}
+                    </td>
                 {daysOrder.map(day => {
                   const classesAtTime = timetableData[day][time] || [];
                   return (
@@ -415,36 +416,6 @@ const StudentCourses = ({ courses, loading, error }) => {
         </div>
         </div>
       )}
-
-      {/* Quick Actions */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center mr-3">
-              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            <div>
-              <h4 className="font-medium text-blue-700 dark:text-blue-300">Enroll in New Course</h4>
-              <p className="text-sm text-blue-600 dark:text-blue-400">Browse available courses</p>
-            </div>
-          </div>
-
-          <div className="flex items-center p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors">
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-800 rounded-lg flex items-center justify-center mr-3">
-              <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <h4 className="font-medium text-purple-700 dark:text-purple-300">Course Materials</h4>
-              <p className="text-sm text-purple-600 dark:text-purple-400">Access study resources</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

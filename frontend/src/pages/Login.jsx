@@ -20,7 +20,7 @@ export default function AuthCard() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "", // student or teacher
+    role: "student", // Always student
   });
 
   // Handle input change
@@ -100,7 +100,7 @@ export default function AuthCard() {
         email: "",
         password: "",
         confirmPassword: "",
-        role: "",
+        role: "student",
       });
     } catch (error) {
       setErr(error.response?.data?.message || "Error signing up");
@@ -207,30 +207,11 @@ export default function AuthCard() {
           <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-center">
             <h1 className="text-3xl font-bold text-blue-700 mb-6">Create Account</h1>
 
-            {/* Role Selection */}
-            <div className="flex mb-4">
-              <button
-                type="button"
-                onClick={() => setSignupData({ ...signupData, role: "student" })}
-                className={`w-1/2 py-2 text-sm font-medium border border-blue-500 rounded-l ${
-                  signupData.role === "student"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-blue-500"
-                }`}
-              >
-                Student
-              </button>
-              <button
-                type="button"
-                onClick={() => setSignupData({ ...signupData, role: "teacher" })}
-                className={`w-1/2 py-2 text-sm font-medium border border-blue-500 rounded-r ${
-                  signupData.role === "teacher"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-blue-500"
-                }`}
-              >
-                Teacher
-              </button>
+            {/* Student Signup - No Role Selection */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700 font-medium">
+                Student Registration
+              </p>
             </div>
 
             <form onSubmit={handleSignup}>
