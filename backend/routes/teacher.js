@@ -122,6 +122,20 @@ router.post("/submit-attendance", verifyTeacher, async (req, res) => {
       if (updateError) throw updateError;
     }
 
+    // IMPORTANT: Mark ALL attendance records for this class/date as submitted
+    // This includes records created by QR scans that weren't in the toUpdate list
+    const { error: markAllSubmittedError } = await supabase
+      .from("attendance")
+      .update({ is_submitted: true })
+      .eq("class_id", classId)
+      .gte("date", `${attendanceDate}T00:00:00`)
+      .lte("date", `${attendanceDate}T23:59:59`);
+
+    if (markAllSubmittedError) {
+      console.error("Error marking all as submitted:", markAllSubmittedError);
+      throw markAllSubmittedError;
+    }
+
     res.json({
       message: "Attendance submitted successfully",
       submitted: recordsToInsertOrUpdate.length,

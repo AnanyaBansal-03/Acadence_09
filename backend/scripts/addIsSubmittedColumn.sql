@@ -2,15 +2,17 @@
 ALTER TABLE attendance 
 ADD COLUMN IF NOT EXISTS is_submitted BOOLEAN DEFAULT false;
 
--- Update existing attendance records to be submitted (so old data is visible)
+-- Update ALL existing attendance records to be submitted (so old data is visible)
+-- This makes all current attendance visible to students and admin
 UPDATE attendance 
-SET is_submitted = true 
-WHERE is_submitted IS NULL;
+SET is_submitted = true;
 
 -- Add index for better query performance
 CREATE INDEX IF NOT EXISTS idx_attendance_is_submitted ON attendance(is_submitted);
 
 -- Verify the changes
-SELECT column_name, data_type, column_default 
-FROM information_schema.columns 
-WHERE table_name = 'attendance' AND column_name = 'is_submitted';
+SELECT 
+    COUNT(*) as total_records,
+    COUNT(*) FILTER (WHERE is_submitted = true) as submitted_records,
+    COUNT(*) FILTER (WHERE is_submitted = false) as pending_records
+FROM attendance;
