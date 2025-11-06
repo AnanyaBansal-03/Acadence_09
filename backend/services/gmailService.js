@@ -11,13 +11,20 @@ const nodemailer = require('nodemailer');
  */
 async function sendWeeklyAttendanceEmailGmail(to, studentName, subject, aiMessage, subjects) {
   try {
-    // Create Gmail transporter
+    // Create Gmail transporter with better timeout settings
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD
-      }
+      },
+      pool: true, // Use pooled connections
+      maxConnections: 1, // Limit concurrent connections
+      rateDelta: 2000, // Minimum time between messages (2 seconds)
+      rateLimit: 5, // Maximum messages per rateDelta
+      connectionTimeout: 60000, // 60 second connection timeout
+      greetingTimeout: 30000, // 30 second greeting timeout
+      socketTimeout: 60000, // 60 second socket timeout
     });
 
     const htmlContent = generateWeeklyEmailHTML(studentName, aiMessage, subjects);
@@ -32,6 +39,9 @@ async function sendWeeklyAttendanceEmailGmail(to, studentName, subject, aiMessag
     };
 
     const info = await transporter.sendMail(mailOptions);
+    
+    // Close the transporter after sending
+    transporter.close();
     
     console.log(`✅ Email sent via Gmail to ${to}`);
     console.log(`   Message ID: ${info.messageId}`);

@@ -137,59 +137,9 @@ async function processBatch(batch, batchNumber, totalBatches) {
 }
 
 /**
- * Process a single batch of emails
+ * Process a single student
  */
-async function processBatch(batch, batchNumber, totalBatches) {
-  console.log(`\n${'='.repeat(70)}`);
-  console.log(`📦 BATCH ${batchNumber}/${totalBatches} - Processing ${batch.length} students`);
-  console.log(`${'='.repeat(70)}`);
-  
-  const batchResults = {
-    sent: 0,
-    failed: 0,
-    skipped: 0,
-    failedStudents: []
-  };
-
-  for (let i = 0; i < batch.length; i++) {
-    const student = batch[i];
-    console.log(`\n📧 [${i + 1}/${batch.length}] ${student.name} (${student.email})`);
-    
-    const result = await processStudentEmail(student);
-    
-    if (result.status === 'sent') {
-      batchResults.sent++;
-    } else if (result.status === 'failed') {
-      batchResults.failed++;
-      batchResults.failedStudents.push({ ...student, error: result.error });
-    } else {
-      batchResults.skipped++;
-    }
-    
-    // Delay between individual emails (except for last email in batch)
-    if (i < batch.length - 1) {
-      console.log(`   ⏸️  Waiting ${CONFIG.EMAIL_DELAY / 1000}s before next email...`);
-      await new Promise(resolve => setTimeout(resolve, CONFIG.EMAIL_DELAY));
-    }
-  }
-  
-  console.log(`\n${'='.repeat(70)}`);
-  console.log(`✅ BATCH ${batchNumber} COMPLETE`);
-  console.log(`   📨 Sent: ${batchResults.sent}`);
-  console.log(`   ❌ Failed: ${batchResults.failed}`);
-  console.log(`   ⏭️  Skipped: ${batchResults.skipped}`);
-  console.log(`${'='.repeat(70)}`);
-  
-  return batchResults;
-}
-
-/**
- * Process a single student email
- */
-async function processStudentEmail(student) {
-  // This function will contain the existing sendAttendanceEmails logic for one student
-  return { status: 'skipped', reason: 'placeholder' };
-}
+async function processStudent(student) {
 
 async function sendAttendanceEmails() {
   try {
