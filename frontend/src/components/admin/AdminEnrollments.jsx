@@ -256,12 +256,12 @@ ${result.details.classes.join('\n')}
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Manage Enrollments</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Enroll students in classes</p>
+            <h2 className="text-3xl font-bold text-gray-800">Manage Enrollments</h2>
+            <p className="text-gray-600 mt-1">Enroll students in classes</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -283,27 +283,27 @@ ${result.details.classes.join('\n')}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Student Name</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Email</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Class</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Enrolled On</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+              <tr className="border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Student Name</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Class</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Enrolled On</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
               {groupedEnrollments.map((enrollment) => (
-                <tr key={`${enrollment.student_id}_${enrollment.subject_code}_${enrollment.group_name}`} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium">
+                <tr key={`${enrollment.student_id}_${enrollment.subject_code}_${enrollment.group_name}`} className="border-b border-gray-100 hover:bg-gray-50:bg-gray-700">
+                  <td className="px-4 py-3 text-gray-800 font-medium">
                     {enrollment.student_name || 'Unknown'}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-gray-600">
                     {enrollment.student_email || 'N/A'}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-gray-600">
                     {enrollment.subject_code} {enrollment.group_name ? `(${enrollment.group_name})` : ''}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-gray-600">
                     {new Date(enrollment.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
@@ -321,24 +321,24 @@ ${result.details.classes.join('\n')}
         </div>
 
         {groupedEnrollments.length === 0 && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-gray-500">
             No enrollments yet
           </div>
         )}
 
         {/* Stats */}
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Subject Enrollments</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{groupedEnrollments.length}</p>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Subject Enrollments</p>
+            <p className="text-2xl font-bold text-blue-600">{groupedEnrollments.length}</p>
           </div>
-          <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Enrolled Students</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{new Set(groupedEnrollments.map(e => e.student_id)).size}</p>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Enrolled Students</p>
+            <p className="text-2xl font-bold text-green-600">{new Set(groupedEnrollments.map(e => e.student_id)).size}</p>
           </div>
-          <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total Class Sessions</p>
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{enrollments.length}</p>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Total Class Sessions</p>
+            <p className="text-2xl font-bold text-purple-600">{enrollments.length}</p>
           </div>
         </div>
       </div>
@@ -346,13 +346,13 @@ ${result.details.classes.join('\n')}
       {/* Create Enrollment Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">Enroll Student</h3>
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Enroll Student</h3>
             <form onSubmit={handleCreateEnrollment} className="space-y-4">
               <select
                 value={formData.student_id}
                 onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               >
                 <option value="">Select Student</option>
                 {students.map((student) => (
@@ -364,7 +364,7 @@ ${result.details.classes.join('\n')}
               <select
                 value={formData.class_id}
                 onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               >
                 <option value="">Select Class</option>
                 {(() => {
@@ -393,9 +393,9 @@ ${result.details.classes.join('\n')}
                 
                 if (selectedStudent && studentGroup) {
                   return (
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        📌 Showing only classes for group: <span className="font-bold text-purple-600 dark:text-purple-400">{studentGroup}</span>
+                    <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        📌 Showing only classes for group: <span className="font-bold text-purple-600">{studentGroup}</span>
                       </p>
                     </div>
                   );
@@ -403,8 +403,8 @@ ${result.details.classes.join('\n')}
                 
                 if (selectedStudent && !studentGroup) {
                   return (
-                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-700">
                         ⚠️ Student has no group assigned. All classes are shown.
                       </p>
                     </div>
@@ -437,16 +437,16 @@ ${result.details.classes.join('\n')}
       {/* Bulk Enrollment Modal */}
       {showBulkModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Bulk Enroll Students</h3>
+              <h3 className="text-2xl font-bold text-gray-800">Bulk Enroll Students</h3>
               <button
                 onClick={() => {
                   setShowBulkModal(false);
                   setBulkFormData({ class_id: '', student_ids: [] });
                   setSearchTerm('');
                 }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700:text-gray-200"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -456,15 +456,15 @@ ${result.details.classes.join('\n')}
 
             <form onSubmit={handleBulkEnrollment}>
               {/* Step 1: Select Subject & Group */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-                <label className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200">
+                <label className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                   <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
                   Select Subject & Group
                 </label>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Subject</label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
                     <select
                       value={bulkFormData.subject_code}
                       onChange={(e) => {
@@ -472,7 +472,7 @@ ${result.details.classes.join('\n')}
                         setSearchTerm('');
                       }}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium"
                     >
                       <option value="">Choose subject...</option>
                       {subjects.map((subject) => (
@@ -484,7 +484,7 @@ ${result.details.classes.join('\n')}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Group</label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
                     <select
                       value={bulkFormData.group_name}
                       onChange={(e) => {
@@ -493,7 +493,7 @@ ${result.details.classes.join('\n')}
                       }}
                       required
                       disabled={!bulkFormData.subject_code}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium disabled:opacity-50"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium disabled:opacity-50"
                     >
                       <option value="">Choose group...</option>
                       {bulkFormData.subject_code && (() => {
@@ -553,7 +553,7 @@ ${result.details.classes.join('\n')}
                 return (
                   <>
                     {/* Subject Info Banner */}
-                    <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                    <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-200">
                       <div className="flex items-start gap-3">
                         <div className="bg-purple-600 text-white rounded-lg p-2">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -561,29 +561,29 @@ ${result.details.classes.join('\n')}
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-1">
+                          <h4 className="font-bold text-gray-800 mb-1">
                             {bulkFormData.subject_code} - All Sessions
                           </h4>
                           <div className="flex flex-wrap gap-2 text-sm mb-2">
-                            <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full font-bold">
+                            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-bold">
                               Group: {bulkFormData.group_name}
                             </span>
-                            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
+                            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
                               {subjectClasses.length} class session{subjectClasses.length !== 1 ? 's' : ''}
                             </span>
-                            <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">
+                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">
                               {filteredStudents.length} eligible students
                             </span>
-                            <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded-full">
+                            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full">
                               {enrolledStudentIds.size} already enrolled
                             </span>
                           </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                          <div className="text-xs text-gray-600 space-y-1">
                             <div className="font-semibold">📅 Class Schedule:</div>
                             <div className="grid grid-cols-2 gap-1">
                               {subjectClasses.map(cls => (
                                 <div key={cls.id} className="flex items-center gap-1">
-                                  <span className="text-purple-600 dark:text-purple-400">•</span>
+                                  <span className="text-purple-600">•</span>
                                   {cls.day_of_week} at {cls.start_time}
                                 </div>
                               ))}
@@ -595,10 +595,10 @@ ${result.details.classes.join('\n')}
 
                     {/* Step 2: Select Students */}
                     <div className="mb-4">
-                      <label className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                      <label className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                         <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
                         Select Students to Enroll
-                        <span className="ml-auto text-blue-600 dark:text-blue-400 font-normal">
+                        <span className="ml-auto text-blue-600 font-normal">
                           {bulkFormData.student_ids.length} selected
                         </span>
                       </label>
@@ -610,7 +610,7 @@ ${result.details.classes.join('\n')}
                           placeholder="Search by name or email..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg bg-white text-gray-900"
                         />
                         <svg className="absolute left-3 top-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -630,21 +630,21 @@ ${result.details.classes.join('\n')}
                               student_ids: allFilteredIds
                             }));
                           }}
-                          className="px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                          className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200:bg-green-800 transition-colors"
                         >
                           ✓ Select All Available
                         </button>
                         <button
                           type="button"
                           onClick={() => setBulkFormData(prev => ({ ...prev, student_ids: [] }))}
-                          className="px-3 py-1.5 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg text-sm font-medium hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                          className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200:bg-red-800 transition-colors"
                         >
                           ✗ Clear Selection
                         </button>
                       </div>
 
                       {/* Students List - Grouped */}
-                      <div className="border border-gray-300 dark:border-gray-600 rounded-lg max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                      <div className="border border-gray-300 rounded-lg max-h-96 overflow-y-auto bg-gray-50">
                         {searchFilteredStudents.length === 0 ? (
                           <div className="p-8 text-center">
                             <div className="text-gray-400 mb-2">
@@ -652,7 +652,7 @@ ${result.details.classes.join('\n')}
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                               </svg>
                             </div>
-                            <p className="text-gray-500 dark:text-gray-400">
+                            <p className="text-gray-500">
                               {searchTerm ? 'No students found matching your search' : `No students available${bulkFormData.group_name ? ` for group ${bulkFormData.group_name}` : ''}`}
                             </p>
                           </div>
@@ -660,13 +660,13 @@ ${result.details.classes.join('\n')}
                           Object.entries(groupedStudents).map(([groupName, groupStudents]) => (
                             <div key={groupName} className="mb-2 last:mb-0">
                               {/* Group Header */}
-                              <div className="sticky top-0 bg-gradient-to-r from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-4 py-2 border-b border-gray-300 dark:border-gray-600">
+                              <div className="sticky top-0 bg-gradient-to-r from-gray-200 to-gray-100 px-4 py-2 border-b border-gray-300">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                                  <span className="font-bold text-gray-800 flex items-center gap-2">
                                     <span className="px-2 py-0.5 bg-purple-600 text-white rounded text-xs">
                                       {groupName}
                                     </span>
-                                    <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                                    <span className="text-sm font-normal text-gray-600">
                                       {groupStudents.length} student{groupStudents.length !== 1 ? 's' : ''}
                                     </span>
                                   </span>
@@ -685,7 +685,7 @@ ${result.details.classes.join('\n')}
                                           : [...new Set([...prev.student_ids, ...groupStudentIds])]
                                       }));
                                     }}
-                                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                    className="text-xs text-blue-600 hover:underline font-medium"
                                   >
                                     {groupStudents.filter(s => !enrolledStudentIds.has(s.id)).every(s => bulkFormData.student_ids.includes(s.id))
                                       ? 'Deselect Group' : 'Select Group'}
@@ -701,12 +701,12 @@ ${result.details.classes.join('\n')}
                                 return (
                                   <label
                                     key={student.id}
-                                    className={`flex items-center p-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 transition-colors ${
+                                    className={`flex items-center p-3 border-b border-gray-200 last:border-b-0 transition-colors ${
                                       isEnrolled 
-                                        ? 'bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed' 
+                                        ? 'bg-gray-100 opacity-50 cursor-not-allowed' 
                                         : isSelected
-                                          ? 'bg-blue-50 dark:bg-blue-900/20 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30'
-                                          : 'bg-white dark:bg-gray-900 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'
+                                          ? 'bg-blue-50 cursor-pointer hover:bg-blue-100:bg-blue-900/30'
+                                          : 'bg-white cursor-pointer hover:bg-gray-50:bg-gray-800'
                                     }`}
                                   >
                                     <input
@@ -722,16 +722,16 @@ ${result.details.classes.join('\n')}
                                     />
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2">
-                                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                                        <span className="font-medium text-gray-900">
                                           {student.name}
                                         </span>
                                         {isEnrolled && (
-                                          <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-bold">
+                                          <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">
                                             ✓ Already Enrolled
                                           </span>
                                         )}
                                       </div>
-                                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      <div className="text-sm text-gray-500">
                                         {student.email}
                                       </div>
                                     </div>
@@ -746,16 +746,16 @@ ${result.details.classes.join('\n')}
 
                     {/* Summary */}
                     {bulkFormData.student_ids.length > 0 && (
-                      <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg">
+                      <div className="mb-4 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                             ✓
                           </div>
                           <div>
-                            <p className="font-bold text-gray-800 dark:text-gray-200">
+                            <p className="font-bold text-gray-800">
                               Ready to enroll {bulkFormData.student_ids.length} student{bulkFormData.student_ids.length !== 1 ? 's' : ''} in {bulkFormData.subject_code}
                             </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-gray-600">
                               Each student will be enrolled in {subjectClasses.length} class session{subjectClasses.length !== 1 ? 's' : ''} ({subjectClasses.map(c => c.day_of_week).join(', ')})
                             </p>
                           </div>
@@ -767,7 +767,7 @@ ${result.details.classes.join('\n')}
               })()}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="submit"
                   disabled={isCreating || bulkFormData.student_ids.length === 0 || !bulkFormData.subject_code || !bulkFormData.group_name}
@@ -793,7 +793,7 @@ ${result.details.classes.join('\n')}
                     setSearchTerm('');
                   }}
                   disabled={isCreating}
-                  className="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 font-bold transition-colors disabled:opacity-50"
+                  className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400:bg-gray-500 font-bold transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>

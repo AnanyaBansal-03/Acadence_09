@@ -164,10 +164,10 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Manage Users</h2>
+          <h2 className="text-3xl font-bold text-gray-800">Manage Users</h2>
           <div className="flex gap-2">
             {selectedUsers.length > 0 && (
               <button
@@ -193,12 +193,12 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
             placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
           />
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -211,7 +211,7 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
+              <tr className="border-b border-gray-200">
                 <th className="px-4 py-3 text-left">
                   <input
                     type="checkbox"
@@ -220,17 +220,17 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
                     className="w-4 h-4"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Name</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Email</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Role</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Group</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Created</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Role</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Group</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Created</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50:bg-gray-700">
                   <td className="px-4 py-3">
                     {user.role === 'student' && (
                       <input
@@ -241,27 +241,27 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
                       />
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{user.name}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{user.email}</td>
+                  <td className="px-4 py-3 text-gray-800">{user.name}</td>
+                  <td className="px-4 py-3 text-gray-600">{user.email}</td>
                   <td className="px-4 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      user.role === 'admin' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                      user.role === 'teacher' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      user.role === 'teacher' ? 'bg-blue-100 text-blue-800' :
+                      'bg-green-100 text-green-800'
                     }`}>
                       {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     {user.role === 'student' && user.group_name ? (
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                         {user.group_name}
                       </span>
                     ) : (
                       <span className="text-gray-400 text-xs">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-gray-600">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
@@ -279,24 +279,24 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
         </div>
 
         {filteredUsers.length === 0 && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-gray-500">
             No users found
           </div>
         )}
 
         {/* Stats */}
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{users.length}</p>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Total Users</p>
+            <p className="text-2xl font-bold text-blue-600">{users.length}</p>
           </div>
-          <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Students</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{users.filter(u => u.role === 'student').length}</p>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Students</p>
+            <p className="text-2xl font-bold text-green-600">{users.filter(u => u.role === 'student').length}</p>
           </div>
-          <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Teachers</p>
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{users.filter(u => u.role === 'teacher').length}</p>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Teachers</p>
+            <p className="text-2xl font-bold text-purple-600">{users.filter(u => u.role === 'teacher').length}</p>
           </div>
         </div>
       </div>
@@ -304,34 +304,34 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
       {/* Create User Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">Create New User</h3>
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Create New User</h3>
             <form onSubmit={handleCreateUser} className="space-y-4">
               <input
                 type="text"
                 placeholder="Full Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               />
               <input
                 type="email"
                 placeholder="Email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               />
               <input
                 type="password"
                 placeholder="Password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               />
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               >
                 <option value="student">Student</option>
                 <option value="teacher">Teacher</option>
@@ -361,21 +361,21 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
       {/* Bulk Group Assignment Modal */}
       {showGroupModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
               Assign Students to Group
             </h3>
             <div className="mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <p className="text-sm text-gray-600 mb-2">
                 Selected Students: {selectedUsers.length}
               </p>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Group
               </label>
               <select
                 value={bulkGroup}
                 onChange={(e) => setBulkGroup(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               >
                 {availableGroups.map((group) => (
                   <option key={group} value={group}>

@@ -45,19 +45,19 @@ const TeacherSidebar = ({ sidebarOpen, setSidebarOpen, currentFeature, handleFea
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-14 md:top-16 h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-40 ${
+        className={`fixed left-0 top-14 md:top-16 h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-40 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
           {/* Home Button */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b border-gray-200">
             <button
               onClick={() => handleMenuClick(handleHomeClick)}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 currentFeature === 'home'
-                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'hover:bg-gray-100:bg-gray-700 text-gray-700'
               }`}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,8 +76,8 @@ const TeacherSidebar = ({ sidebarOpen, setSidebarOpen, currentFeature, handleFea
                   onClick={() => handleMenuClick(() => handleFeatureClick(feature.id))}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                     currentFeature === feature.id
-                      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'hover:bg-gray-100:bg-gray-700 text-gray-700'
                   }`}
                 >
                   {feature.icon}
@@ -88,8 +88,8 @@ const TeacherSidebar = ({ sidebarOpen, setSidebarOpen, currentFeature, handleFea
           </nav>
 
           {/* Footer Info */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <div className="p-4 border-t border-gray-200">
+            <div className="text-xs text-gray-500 space-y-1">
               <p>Acadence Teacher Portal</p>
               <p>© 2024 All rights reserved</p>
             </div>

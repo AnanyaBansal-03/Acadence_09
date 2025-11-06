@@ -94,24 +94,29 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Attendance</h3>
-        <p className="text-red-600 dark:text-red-400">{error}</p>
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Attendance</h3>
+        <p className="text-red-600">{error}</p>
       </div>
     );
   }
 
   return (
     <div className="mb-8">
-      <p className="text-gray-600 dark:text-gray-300 mb-6">
+      <p className="text-gray-600 mb-6">
         Track your class attendance records, view history, and check your attendance percentage for each course.
       </p>
 
       {/* QR Scan Section - ALWAYS VISIBLE AT TOP */}
-      <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-8 shadow-md border-2 border-blue-200 dark:border-blue-700 mb-8">
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-8 shadow-md border-2 border-blue-200 mb-8">
         <div className="text-center">
-          <h3 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100">📱 Mark Your Attendance</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+            <h3 className="text-2xl font-bold text-gray-800">Mark Your Attendance</h3>
+          </div>
+          <p className="text-gray-600 mb-6">
             Point your camera at the QR code displayed by your teacher to mark attendance
           </p>
           <button
@@ -125,12 +130,12 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Attendance Summary */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">
             Attendance by Subject
           </h3>
           {courses.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-gray-500 text-center py-8">
               No subjects enrolled yet
             </p>
           ) : (
@@ -142,20 +147,20 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
                 return (
                   <div key={course.id}>
                     <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-gray-700">
                         {course.subject_code || course.name}
                       </span>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-gray-700">
                         {stats.percentage}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className={`${getProgressColor(stats.percentage)} h-2 rounded-full transition-all`}
                         style={{ width: `${stats.percentage}%` }}
                       ></div>
                     </div>
-                    <div className="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex justify-between mt-1 text-xs text-gray-500">
                       <span>{stats.present} marked present</span>
                       <span>{stats.absent} not marked</span>
                       <span>{stats.total} days</span>
@@ -168,15 +173,15 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
         </div>
 
         {/* Recent Records */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800">
               Recent Records
             </h3>
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="px-3 py-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="px-3 py-1 text-sm rounded-lg border border-gray-300 bg-white text-gray-900"
             >
               <option value="all">All Subjects</option>
               {courses.map(course => (
@@ -188,7 +193,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
           </div>
           
           {filteredRecords.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-gray-500 text-center py-8">
               No attendance records found
             </p>
           ) : (
@@ -196,23 +201,23 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
               {filteredRecords.map((record, index) => (
                 <li
                   key={`${record.class_id}-${record.date}-${index}`}
-                  className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                  className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
                 >
                   <div>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium block">
+                    <span className="text-gray-700 font-medium block">
                       {getCourseName(record.class_id)}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-gray-500">
                       {formatDate(record.date)}
                     </span>
                   </div>
                   <span
                     className={`px-3 py-1 text-xs font-medium rounded-full ${
                       record.status === 'present'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        ? 'bg-green-100 text-green-800'
                         : record.status === 'absent'
-                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
                     }`}
                   >
                     {record.status.charAt(0).toUpperCase() + record.status.slice(1)}

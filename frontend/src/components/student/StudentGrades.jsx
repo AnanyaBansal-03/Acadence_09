@@ -82,11 +82,11 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
 
   // Get grade color
   const getGradeColor = (score) => {
-    if (score >= 90) return 'text-green-600 dark:text-green-400';
-    if (score >= 80) return 'text-blue-600 dark:text-blue-400';
-    if (score >= 70) return 'text-yellow-600 dark:text-yellow-400';
-    if (score >= 60) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
+    if (score >= 90) return 'text-green-600';
+    if (score >= 80) return 'text-blue-600';
+    if (score >= 70) return 'text-yellow-600';
+    if (score >= 60) return 'text-orange-600';
+    return 'text-red-600';
   };
 
   // Calculate overall GPA
@@ -130,41 +130,23 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Grades</h3>
-        <p className="text-red-600 dark:text-red-400">{error}</p>
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Grades</h3>
+        <p className="text-red-600">{error}</p>
       </div>
     );
   }
 
   return (
     <div className="mb-8">
-      <p className="text-gray-600 dark:text-gray-300 mb-6">
-        View your academic performance, grades for all courses, and track your progress throughout the semester.
-      </p>
-
-      {/* Overall Performance */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 mb-6 text-white shadow-lg">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold mb-1">Overall Performance</h3>
-            <p className="text-blue-100">Your current academic standing</p>
-          </div>
-          <div className="text-right">
-            <p className="text-4xl font-bold">{overallAverage}%</p>
-            <p className="text-blue-100">Average Score</p>
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Current Grades by Subject - Show All Sections */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">
             Current Grades by Subject
           </h3>
           {courses.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-gray-500 text-center py-8">
               No subjects enrolled yet
             </p>
           ) : (
@@ -173,12 +155,12 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
                 const stats = gradeStats[course.id];
                 if (!stats || !stats.hasSections) {
                   return (
-                    <div key={course.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div key={course.id} className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <span className="text-sm font-medium text-gray-700">
                           {course.subject_code || course.name}
                         </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-gray-500">
                           No grades yet
                         </span>
                       </div>
@@ -187,43 +169,43 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
                 }
                 
                 return (
-                  <div key={course.id} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <div key={course.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      <span className="text-sm font-semibold text-gray-800">
                         {course.subject_code || course.name}
                       </span>
                       <div className="flex items-center space-x-2">
                         <span className={`text-2xl font-bold ${getGradeColor(stats.average)}`}>
                           {stats.letter}
                         </span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                        <span className="text-sm text-gray-500">
                           {stats.average}%
                         </span>
                       </div>
                     </div>
                     
                     {/* Individual Section Marks */}
-                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">ST1</p>
+                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-200">
+                      <div className="bg-white p-2 rounded">
+                        <p className="text-xs text-gray-500">ST1</p>
                         <p className={`text-lg font-bold ${stats.st1 ? getGradeColor(stats.st1) : 'text-gray-400'}`}>
                           {stats.st1 ? `${stats.st1}%` : '-'}
                         </p>
                       </div>
-                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">ST2</p>
+                      <div className="bg-white p-2 rounded">
+                        <p className="text-xs text-gray-500">ST2</p>
                         <p className={`text-lg font-bold ${stats.st2 ? getGradeColor(stats.st2) : 'text-gray-400'}`}>
                           {stats.st2 ? `${stats.st2}%` : '-'}
                         </p>
                       </div>
-                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Evaluation</p>
+                      <div className="bg-white p-2 rounded">
+                        <p className="text-xs text-gray-500">Evaluation</p>
                         <p className={`text-lg font-bold ${stats.evaluation ? getGradeColor(stats.evaluation) : 'text-gray-400'}`}>
                           {stats.evaluation ? `${stats.evaluation}%` : '-'}
                         </p>
                       </div>
-                      <div className="bg-white dark:bg-gray-800 p-2 rounded">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">End Term</p>
+                      <div className="bg-white p-2 rounded">
+                        <p className="text-xs text-gray-500">End Term</p>
                         <p className={`text-lg font-bold ${stats.end_term ? getGradeColor(stats.end_term) : 'text-gray-400'}`}>
                           {stats.end_term ? `${stats.end_term}%` : '-'}
                         </p>
@@ -237,15 +219,15 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
         </div>
 
         {/* Detailed Marks Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800">
               Detailed Section Marks
             </h3>
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="px-3 py-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="px-3 py-1 text-sm rounded-lg border border-gray-300 bg-white text-gray-900"
             >
               <option value="all">All Subjects</option>
               {courses.map(course => (
@@ -270,7 +252,7 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
 
             if (subjectsWithGrades.length === 0) {
               return (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                <p className="text-gray-500 text-center py-8">
                   No grades recorded yet
                 </p>
               );
@@ -280,12 +262,12 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Subject</th>
-                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST1</th>
-                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">ST2</th>
-                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">Evaluation</th>
-                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700 dark:text-gray-300">End Term</th>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-2 text-xs font-semibold text-gray-700">Subject</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700">ST1</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700">ST2</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700">Evaluation</th>
+                      <th className="text-center py-3 px-2 text-xs font-semibold text-gray-700">End Term</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -294,10 +276,10 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
                       return (
                         <tr
                           key={subject.id}
-                          className="border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          className="border-b border-gray-100 last:border-0 hover:bg-gray-50:bg-gray-700/50"
                         >
                           <td className="py-3 px-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <span className="text-sm font-medium text-gray-700">
                               {subject.subject_code || subject.name}
                             </span>
                           </td>
@@ -349,8 +331,8 @@ const StudentGrades = ({ grades = [], courses, loading, error }) => {
       </div>
       {/* Note about grades */}
       {grades.length === 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mt-6">
-          <p className="text-blue-800 dark:text-blue-200">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mt-6">
+          <p className="text-blue-800">
             ℹ️ No grades have been posted yet. Grades will appear here once your teachers grade your assignments.
           </p>
         </div>

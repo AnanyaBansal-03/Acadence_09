@@ -186,12 +186,12 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Manage Classes</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">View and manage class schedule</p>
+            <h2 className="text-3xl font-bold text-gray-800">Manage Classes</h2>
+            <p className="text-gray-600 mt-1">View and manage class schedule</p>
           </div>
           <div className="flex gap-3">
             {/* Group Filter (only in timetable view) */}
@@ -199,7 +199,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
               <select
                 value={selectedGroupFilter}
                 onChange={(e) => setSelectedGroupFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               >
                 <option value="all">All Groups</option>
                 {availableGroups.map(group => (
@@ -208,13 +208,13 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
               </select>
             )}
             {/* View Toggle */}
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('timetable')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   viewMode === 'timetable'
-                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow'
-                    : 'text-gray-600 dark:text-gray-300'
+                    ? 'bg-white text-blue-600 shadow'
+                    : 'text-gray-600'
                 }`}
               >
                 📅 Timetable
@@ -223,8 +223,8 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                 onClick={() => setViewMode('list')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   viewMode === 'list'
-                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow'
-                    : 'text-gray-600 dark:text-gray-300'
+                    ? 'bg-white text-blue-600 shadow'
+                    : 'text-gray-600'
                 }`}
               >
                 📋 List
@@ -244,16 +244,16 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
           <div>
             {/* Group Filter Info */}
             {selectedGroupFilter !== 'all' && (
-              <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg flex items-center justify-between">
+              <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Showing classes for:</span>
+                  <span className="text-sm text-gray-700">Showing classes for:</span>
                   <span className="px-3 py-1 rounded-full text-sm font-bold bg-purple-600 text-white">
                     {selectedGroupFilter}
                   </span>
                 </div>
                 <button
                   onClick={() => setSelectedGroupFilter('all')}
-                  className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+                  className="text-sm text-purple-600 hover:underline"
                 >
                   Clear filter
                 </button>
@@ -262,12 +262,12 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
             <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-100 dark:bg-gray-700">
-                  <th className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 sticky left-0 bg-gray-100 dark:bg-gray-700">
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700 sticky left-0 bg-gray-100">
                     Time
                   </th>
                   {daysOrder.map(day => (
-                    <th key={day} className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <th key={day} className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">
                       {dayLabels[day]}
                     </th>
                   ))}
@@ -275,31 +275,31 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
               </thead>
               <tbody>
                 {timeSlots.map(timeSlot => (
-                  <tr key={timeSlot} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 sticky left-0">
+                  <tr key={timeSlot} className="hover:bg-gray-50:bg-gray-700/50">
+                    <td className="border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 sticky left-0">
                       {timeSlot}
                     </td>
                     {daysOrder.map(day => {
                       const classesAtTime = timetableData[day][timeSlot] || [];
                       return (
-                        <td key={`${day}-${timeSlot}`} className="border border-gray-300 dark:border-gray-600 px-2 py-2 align-top">
+                        <td key={`${day}-${timeSlot}`} className="border border-gray-300 px-2 py-2 align-top">
                           {classesAtTime.length > 0 ? (
                             <div className="space-y-1">
                               {classesAtTime.map(cls => {
                                 // Only show full details in the first slot
                                 if (cls.isFirstSlot) {
                                   return (
-                                    <div key={cls.id} className="bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500 dark:border-blue-400 p-2 rounded text-xs">
+                                    <div key={cls.id} className="bg-blue-100 border-l-4 border-blue-500 p-2 rounded text-xs">
                                       <div className="flex justify-between items-start">
-                                        <div className="font-semibold text-gray-800 dark:text-gray-100">{cls.name}</div>
+                                        <div className="font-semibold text-gray-800">{cls.name}</div>
                                         <span className="px-2 py-0.5 bg-purple-500 text-white rounded text-xs font-bold">
                                           {cls.group_name || 'No Group'}
                                         </span>
                                       </div>
-                                      <div className="text-gray-600 dark:text-gray-300 mt-1">
+                                      <div className="text-gray-600 mt-1">
                                         👤 {cls.users?.name || 'No teacher'}
                                       </div>
-                                      <div className="text-gray-500 dark:text-gray-400 mt-1">
+                                      <div className="text-gray-500 mt-1">
                                         🕐 {cls.start_time || cls.schedule_time} - {cls.calculatedEndTime}
                                       </div>
                                       <button
@@ -313,8 +313,8 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                                 } else {
                                   // Show continuation indicator in subsequent slots
                                   return (
-                                    <div key={cls.id} className="bg-blue-50 dark:bg-blue-900/50 border-l-4 border-blue-400 dark:border-blue-500 p-2 rounded text-xs">
-                                      <div className="text-gray-700 dark:text-gray-300 text-center font-medium">
+                                    <div key={cls.id} className="bg-blue-50 border-l-4 border-blue-400 p-2 rounded text-xs">
+                                      <div className="text-gray-700 text-center font-medium">
                                         ↑ {cls.name}
                                       </div>
                                     </div>
@@ -323,7 +323,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                               })}
                             </div>
                           ) : (
-                            <div className="text-gray-400 dark:text-gray-500 text-xs text-center py-4">-</div>
+                            <div className="text-gray-400 text-xs text-center py-4">-</div>
                           )}
                         </td>
                       );
@@ -339,15 +339,15 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
           <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Class Name</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Group</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Teacher</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Day</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Time</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Duration</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+              <tr className="border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Class Name</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Group</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Teacher</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Day</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Time</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Duration</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -357,23 +357,23 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                 const endTime = calculateEndTime(startTime, cls.duration_hours);
 
                 return (
-                  <tr key={cls.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium">{cls.name}</td>
+                  <tr key={cls.id} className="border-b border-gray-100 hover:bg-gray-50:bg-gray-700">
+                    <td className="px-4 py-3 text-gray-800 font-medium">{cls.name}</td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold">
+                      <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
                         {cls.group_name || 'No Group'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-600">
                       {cls.users?.name || 'Unassigned'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-600">
                       {dayLabels[cls.day_of_week] || cls.day_of_week}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-600">
                       {startTime} {endTime && `- ${endTime}`}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-gray-600">
                       {cls.duration_hours ? `${cls.duration_hours} hrs` : '1 hr'}
                     </td>
                     <td className="px-4 py-3">
@@ -402,30 +402,30 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
         )}
 
         {classes.length === 0 && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div className="text-center py-8 text-gray-500">
             No classes created yet
           </div>
         )}
 
         {/* Stats */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Total Classes</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{classes.length}</p>
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Total Classes</p>
+            <p className="text-2xl font-bold text-blue-600">{classes.length}</p>
           </div>
-          <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Teachers</p>
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{teachers.length}</p>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Teachers</p>
+            <p className="text-2xl font-bold text-purple-600">{teachers.length}</p>
           </div>
-          <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Active Groups</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="bg-green-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Active Groups</p>
+            <p className="text-2xl font-bold text-green-600">
               {new Set(classes.map(c => c.group_name).filter(Boolean)).size}
             </p>
           </div>
-          <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Avg Classes/Group</p>
-            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <p className="text-sm text-gray-600">Avg Classes/Group</p>
+            <p className="text-2xl font-bold text-orange-600">
               {classes.length > 0 ? Math.round(classes.length / Math.max(new Set(classes.map(c => c.group_name).filter(Boolean)).size, 1)) : 0}
             </p>
           </div>
@@ -435,20 +435,20 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
       {/* Create Class Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">Create New Class</h3>
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Create New Class</h3>
             <form onSubmit={handleCreateClass} className="space-y-4">
               <input
                 type="text"
                 placeholder="Class Name (e.g., Mathematics 101)"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               />
               <select
                 value={formData.day_of_week}
                 onChange={(e) => setFormData({ ...formData, day_of_week: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               >
                 <option value="monday">Monday</option>
                 <option value="tuesday">Tuesday</option>
@@ -462,17 +462,17 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                 type="time"
                 value={formData.schedule_time}
                 onChange={(e) => setFormData({ ...formData, schedule_time: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
                 placeholder="Start Time"
               />
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Class Duration
                 </label>
                 <select
                   value={formData.duration_hours}
                   onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
                 >
                   <option value="0.5">30 minutes</option>
                   <option value="1">1 hour</option>
@@ -486,7 +486,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
               <select
                 value={formData.teacher_id}
                 onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
               >
                 <option value="">Select Teacher</option>
                 {teachers.map((teacher) => (
@@ -496,14 +496,14 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                 ))}
               </select>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Group <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.group_name}
                   onChange={(e) => setFormData({ ...formData, group_name: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
                 >
                   {availableGroups.map((group) => (
                     <option key={group} value={group}>
@@ -511,7 +511,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   Students assigned to this group will see this class
                 </p>
               </div>

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, Routes, Route } from "react-router-dom";
+import { useNavigate, Routes, Route, useLocation } from "react-router-dom";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Squares from "./components/Squares";
@@ -17,10 +17,24 @@ import AdminDashboard from "./pages/AdminDash";
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true, offset: 50 });
   }, []);
+
+  // Auto-redirect to dashboard if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    
+    // Only redirect from login/signup/home pages if user is already logged in
+    if (token && role && (location.pathname === "/" || location.pathname === "/login" || location.pathname === "/signup")) {
+      if (role === "admin") navigate("/admin", { replace: true });
+      else if (role === "teacher") navigate("/teacher", { replace: true });
+      else if (role === "student") navigate("/student", { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   return (
     <Routes>

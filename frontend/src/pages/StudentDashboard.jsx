@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../lib/apiConfig';
@@ -341,11 +341,6 @@ const Navbar = ({ onHomeClick, showHomeButton, studentData, onLogout, profileOpe
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Student Dashboard
           </h1>
-          {studentData && (
-            <p className="text-sm text-gray-600">
-              Welcome, {studentData.name} ({studentData.email})
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -524,6 +519,7 @@ const WelcomePage = ({ onFeatureClick, studentData }) => {
 
   return (
     <div className="w-full max-w-6xl">
+      {/* Welcome Section */}
       <div className="text-center mb-12">
         <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl mx-auto mb-6">
           <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

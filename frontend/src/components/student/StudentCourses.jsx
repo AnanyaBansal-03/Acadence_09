@@ -116,8 +116,8 @@ const TimetableView = ({ courses }) => {
   const timetableData = getTimetableData();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 shadow-md border border-gray-200 dark:border-gray-700">
-      <h3 className="text-lg md:text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
+    <div className="bg-white rounded-xl p-4 md:p-6 shadow-md border border-gray-200">
+      <h3 className="text-lg md:text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
         <span>📅</span> Your Weekly Timetable
       </h3>
       {/* Mobile: Full width scroll | Desktop: Normal table */}
@@ -125,11 +125,11 @@ const TimetableView = ({ courses }) => {
         <table className="w-full border-collapse min-w-[800px] md:min-w-0">
           <thead>
             <tr className="bg-gradient-to-r from-blue-500 to-purple-600">
-              <th className="border border-gray-300 dark:border-gray-600 px-3 py-3 text-left text-sm font-semibold text-white sticky left-0 bg-gradient-to-r from-blue-500 to-blue-600 md:static">
+              <th className="border border-gray-300 px-3 py-3 text-left text-sm font-semibold text-white sticky left-0 bg-gradient-to-r from-blue-500 to-blue-600 md:static">
                 Time
               </th>
               {daysOrder.map(day => (
-                <th key={day} className="border border-gray-300 dark:border-gray-600 px-3 py-3 text-center text-sm font-semibold text-white">
+                <th key={day} className="border border-gray-300 px-3 py-3 text-center text-sm font-semibold text-white">
                   {dayLabels[day]}
                 </th>
               ))}
@@ -137,22 +137,22 @@ const TimetableView = ({ courses }) => {
           </thead>
           <tbody>
                 {timeSlots.map(time => (
-                  <tr key={time} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="border border-gray-300 dark:border-gray-600 px-3 py-3 font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 sticky left-0 md:static">
+                  <tr key={time} className="hover:bg-gray-50:bg-gray-700/50">
+                    <td className="border border-gray-300 px-3 py-3 font-medium text-gray-700 bg-gray-50 sticky left-0 md:static">
                       {time}
                     </td>
                 {daysOrder.map(day => {
                   const classesAtTime = timetableData[day][time] || [];
                   return (
-                    <td key={day} className="border border-gray-300 dark:border-gray-600 px-2 py-2">
+                    <td key={day} className="border border-gray-300 px-2 py-2">
                       {classesAtTime.length > 0 ? (
                         <div className="space-y-2">
                           {classesAtTime.map(course => {
                             // Only show full details in the first slot
                             if (course.isFirstSlot) {
                               return (
-                                <div key={course.id} className="bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 border-l-4 border-blue-500 dark:border-blue-400 p-3 rounded-lg shadow-sm">
-                                  <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
+                                <div key={course.id} className="bg-gradient-to-br from-blue-100 to-purple-100 border-l-4 border-blue-500 p-3 rounded-lg shadow-sm">
+                                  <div className="font-semibold text-gray-900 text-sm mb-1">
                                     {course.name}
                                   </div>
                                   {course.group_name && (
@@ -162,7 +162,7 @@ const TimetableView = ({ courses }) => {
                                       </span>
                                     </div>
                                   )}
-                                  <div className="text-gray-600 dark:text-gray-300 text-xs">
+                                  <div className="text-gray-600 text-xs">
                                     🕐 {course.start_time} - {course.calculatedEndTime}
                                   </div>
                                 </div>
@@ -170,8 +170,8 @@ const TimetableView = ({ courses }) => {
                             } else {
                               // Show continuation indicator in subsequent slots
                               return (
-                                <div key={course.id} className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/50 dark:to-purple-900/50 border-l-4 border-blue-400 dark:border-blue-500 p-2 rounded-lg shadow-sm">
-                                  <div className="text-gray-700 dark:text-gray-300 text-xs text-center font-medium">
+                                <div key={course.id} className="bg-gradient-to-br from-blue-50 to-purple-50 border-l-4 border-blue-400 p-2 rounded-lg shadow-sm">
+                                  <div className="text-gray-700 text-xs text-center font-medium">
                                     ↑ {course.name}
                                   </div>
                                 </div>
@@ -180,7 +180,7 @@ const TimetableView = ({ courses }) => {
                           })}
                         </div>
                       ) : (
-                        <div className="text-gray-400 dark:text-gray-500 text-xs text-center py-4">-</div>
+                        <div className="text-gray-400 text-xs text-center py-4">-</div>
                       )}
                     </td>
                   );
@@ -193,25 +193,25 @@ const TimetableView = ({ courses }) => {
       
       {/* Timetable Stats */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Total Classes</p>
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{courses.length}</p>
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <p className="text-sm text-gray-600">Total Classes</p>
+          <p className="text-2xl font-bold text-blue-600">{courses.length}</p>
         </div>
-        <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400">This Week</p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+        <div className="bg-green-50 p-4 rounded-lg">
+          <p className="text-sm text-gray-600">This Week</p>
+          <p className="text-2xl font-bold text-green-600">
             {courses.filter(c => c.day_of_week).length}
           </p>
         </div>
-        <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400">My Group</p>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+        <div className="bg-purple-50 p-4 rounded-lg">
+          <p className="text-sm text-gray-600">My Group</p>
+          <p className="text-2xl font-bold text-purple-600">
             {courses.length > 0 && courses[0].group_name ? courses[0].group_name : '-'}
           </p>
         </div>
-        <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Avg Hours/Day</p>
-          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+        <div className="bg-orange-50 p-4 rounded-lg">
+          <p className="text-sm text-gray-600">Avg Hours/Day</p>
+          <p className="text-2xl font-bold text-orange-600">
             {courses.length > 0 ? Math.round((courses.reduce((sum, c) => sum + (c.duration_hours || 1), 0) / 5) * 10) / 10 : 0}
           </p>
         </div>
@@ -234,8 +234,29 @@ const StudentCourses = ({ courses, loading, error }) => {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
     
-    return courses
-      .filter(course => course.day_of_week)
+    const allSessions = [];
+    
+    courses.forEach(course => {
+      if (course.sessions && course.sessions.length > 0) {
+        // Handle courses with multiple sessions
+        course.sessions.forEach(session => {
+          if (session.day_of_week) {
+            allSessions.push({
+              ...course,
+              day_of_week: session.day_of_week,
+              start_time: session.start_time,
+              duration_hours: session.duration_hours,
+              session_id: session.id
+            });
+          }
+        });
+      } else if (course.day_of_week) {
+        // Handle legacy single session courses
+        allSessions.push(course);
+      }
+    });
+    
+    return allSessions
       .map(course => {
         const courseDayMap = {
           'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
@@ -247,7 +268,11 @@ const StudentCourses = ({ courses, loading, error }) => {
         
         return { ...course, daysUntil };
       })
-      .sort((a, b) => a.daysUntil - b.daysUntil)
+      .sort((a, b) => {
+        // Sort by days until, then by start time
+        if (a.daysUntil !== b.daysUntil) return a.daysUntil - b.daysUntil;
+        return (a.start_time || '').localeCompare(b.start_time || '');
+      })
       .slice(0, 5);
   };
 
@@ -274,9 +299,9 @@ const StudentCourses = ({ courses, loading, error }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Error Loading Courses</h3>
-        <p className="text-red-600 dark:text-red-400">{error}</p>
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Courses</h3>
+        <p className="text-red-600">{error}</p>
       </div>
     );
   }
@@ -284,17 +309,17 @@ const StudentCourses = ({ courses, loading, error }) => {
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-6">
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-gray-600">
           Manage all your courses and class schedules. View upcoming classes, track progress, and access course materials.
         </p>
         {/* View Toggle */}
-        <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+        <div className="flex bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setViewMode('list')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               viewMode === 'list'
-                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow'
-                : 'text-gray-600 dark:text-gray-300'
+                ? 'bg-white text-blue-600 shadow'
+                : 'text-gray-600'
             }`}
           >
             📋 List
@@ -303,8 +328,8 @@ const StudentCourses = ({ courses, loading, error }) => {
             onClick={() => setViewMode('timetable')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               viewMode === 'timetable'
-                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow'
-                : 'text-gray-600 dark:text-gray-300'
+                ? 'bg-white text-blue-600 shadow'
+                : 'text-gray-600'
             }`}
           >
             📅 Timetable
@@ -320,7 +345,7 @@ const StudentCourses = ({ courses, loading, error }) => {
             placeholder="Search courses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 pl-12 rounded-xl border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <svg className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -333,12 +358,12 @@ const StudentCourses = ({ courses, loading, error }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Current Courses */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">
             Enrolled Subjects ({filteredCourses.length})
           </h3>
           {filteredCourses.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-gray-500 text-center py-8">
               {searchTerm ? 'No subjects match your search' : 'No subjects enrolled yet'}
             </p>
           ) : (
@@ -346,10 +371,10 @@ const StudentCourses = ({ courses, loading, error }) => {
               {filteredCourses.map((course) => {
                 const classStatus = getClassStatus(course);
                 return (
-                  <li key={course.id} className="flex justify-between items-start py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                  <li key={course.id} className="flex justify-between items-start py-3 border-b border-gray-100 last:border-0">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-gray-700 dark:text-gray-300 font-bold text-lg">
+                        <span className="text-gray-700 font-bold text-lg">
                           {course.subject_code || course.name}
                         </span>
                         {course.group_name && (
@@ -359,13 +384,13 @@ const StudentCourses = ({ courses, loading, error }) => {
                         )}
                       </div>
                       {course.sessions && course.sessions.length > 0 && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
-                          <div className="font-semibold text-gray-600 dark:text-gray-300">
+                        <div className="text-xs text-gray-500 mt-2 space-y-1">
+                          <div className="font-semibold text-gray-600">
                             📅 {course.sessions.length} session{course.sessions.length !== 1 ? 's' : ''} per week:
                           </div>
                           <div className="grid grid-cols-2 gap-1">
                             {course.sessions.map((session, idx) => (
-                              <div key={idx} className="text-blue-600 dark:text-blue-400">
+                              <div key={idx} className="text-blue-600">
                                 • {session.day_of_week} at {session.start_time}
                               </div>
                             ))}
@@ -384,29 +409,41 @@ const StudentCourses = ({ courses, loading, error }) => {
         </div>
 
         {/* Upcoming Classes */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">
             Upcoming Classes
           </h3>
           {upcomingClasses.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-gray-500 text-center py-8">
               No upcoming classes scheduled
             </p>
           ) : (
             <ul className="space-y-3">
-              {upcomingClasses.map((course) => (
-                <li key={course.id} className="flex justify-between items-center py-2">
-                  <div>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium block">
-                      {getDayLabel(course.daysUntil)}, {course.time}
-                    </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {course.name}
-                    </span>
+              {upcomingClasses.map((course, index) => (
+                <li key={`${course.id}-${course.session_id || index}`} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-gray-800 font-semibold">
+                        {course.subject_code || course.name}
+                      </span>
+                      {course.group_name && (
+                        <span className="px-2 py-0.5 bg-purple-500 text-white rounded text-xs font-bold">
+                          {course.group_name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      📅 {getDayLabel(course.daysUntil)} • 🕐 {course.start_time || 'TBA'}
+                    </div>
                   </div>
                   {course.daysUntil === 0 && (
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full dark:bg-green-900 dark:text-green-200">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                       Today
+                    </span>
+                  )}
+                  {course.daysUntil === 1 && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                      Tomorrow
                     </span>
                   )}
                 </li>

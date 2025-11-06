@@ -201,22 +201,22 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">View Marks of Students</h2>
-          <p className="text-gray-600 dark:text-gray-400">View student grades by subject</p>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">View Marks of Students</h2>
+          <p className="text-gray-600">View student grades by subject</p>
         </div>
 
         {/* Subject Selection */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Select Subject
           </label>
           <select
             value={selectedSubject || ''}
             onChange={(e) => setSelectedSubject(e.target.value)}
-            className="w-full md:w-80 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {subjects.map((subject) => {
               const uniqueKey = `${subject.subject_code}_${subject.group_name}`;
@@ -231,11 +231,11 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
             const selectedSubjectData = subjects.find(s => `${s.subject_code}_${s.group_name}` === selectedSubject);
             if (selectedSubjectData?.group_name) {
               return (
-                <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    📌 Selected Group: <span className="font-bold text-purple-600 dark:text-purple-400">{selectedSubjectData.group_name}</span>
+                <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    📌 Selected Group: <span className="font-bold text-purple-600">{selectedSubjectData.group_name}</span>
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-600 mt-1">
                     Viewing marks aggregated across all sessions of this subject
                   </p>
                 </div>
@@ -252,7 +252,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
             placeholder="Search by student name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
@@ -260,15 +260,15 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Roll No.</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Student Name</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Group</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Email</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">ST1</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">ST2</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Evaluation</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">End Term</th>
+              <tr className="border-b-2 border-gray-200 bg-gray-50">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Roll No.</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Student Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Group</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Email</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">ST1</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">ST2</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Evaluation</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">End Term</th>
               </tr>
             </thead>
             <tbody>
@@ -277,7 +277,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                   <td colSpan="8" className="px-6 py-12 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                      <span className="text-gray-600 dark:text-gray-400">Loading marks...</span>
+                      <span className="text-gray-600">Loading marks...</span>
                     </div>
                   </td>
                 </tr>
@@ -289,18 +289,18 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                   const renderMarkCell = (markValue) => {
                     if (markValue === null || markValue === undefined) {
                       return (
-                        <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
+                        <span className="text-gray-400 text-sm">-</span>
                       );
                     }
                     
                     const numMark = parseFloat(markValue);
                     const colorClass = numMark >= 75
-                      ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+                      ? 'bg-green-100 text-green-700'
                       : numMark >= 60
-                      ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
+                      ? 'bg-yellow-100 text-yellow-700'
                       : numMark >= 45
-                      ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
-                      : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300';
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'bg-red-100 text-red-700';
                     
                     return (
                       <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${colorClass}`}>
@@ -312,15 +312,15 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                   return (
                     <tr
                       key={editKey}
-                      className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      className="border-b border-gray-100 hover:bg-gray-50:bg-gray-700/50 transition-colors"
                     >
-                      <td className="px-6 py-4 text-sm font-bold text-gray-900 dark:text-gray-100">
+                      <td className="px-6 py-4 text-sm font-bold text-gray-900">
                         {student.rollNumber}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-bold text-blue-600 dark:text-blue-300">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-bold text-blue-600">
                               {student.studentName?.charAt(0).toUpperCase() || 'S'}
                             </span>
                           </div>
@@ -328,11 +328,11 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded text-xs font-bold">
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold">
                           {student.studentGroup}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{student.studentEmail}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{student.studentEmail}</td>
                       <td className="px-6 py-4 text-center">
                         {renderMarkCell(student.st1)}
                       </td>
@@ -350,7 +350,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                     <div className="text-4xl mb-2">📊</div>
                     <p>{classes.length === 0 ? 'No classes available' : 'No students enrolled in this class'}</p>
                   </td>
@@ -362,9 +362,9 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
 
         {/* Summary */}
         {filteredStudents.length > 0 && (
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Showing <span className="font-semibold text-gray-900 dark:text-gray-100">{filteredStudents.length}</span> student{filteredStudents.length !== 1 ? 's' : ''} in selected class
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-600">
+              Showing <span className="font-semibold text-gray-900">{filteredStudents.length}</span> student{filteredStudents.length !== 1 ? 's' : ''} in selected class
             </p>
           </div>
         )}

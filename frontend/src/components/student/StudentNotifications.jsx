@@ -145,26 +145,26 @@ const StudentNotifications = () => {
   const getNotificationStyle = (type) => {
     const styles = {
       critical: {
-        bg: 'bg-red-50 dark:bg-red-900/20',
-        border: 'border-red-300 dark:border-red-700',
+        bg: 'bg-red-50',
+        border: 'border-red-300',
         icon: '🚨',
         badge: 'bg-red-600 text-white'
       },
       warning: {
-        bg: 'bg-orange-50 dark:bg-orange-900/20',
-        border: 'border-orange-300 dark:border-orange-700',
+        bg: 'bg-orange-50',
+        border: 'border-orange-300',
         icon: '⚠️',
         badge: 'bg-orange-500 text-white'
       },
       good: {
-        bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-        border: 'border-yellow-300 dark:border-yellow-700',
+        bg: 'bg-yellow-50',
+        border: 'border-yellow-300',
         icon: '✅',
         badge: 'bg-yellow-500 text-white'
       },
       excellent: {
-        bg: 'bg-green-50 dark:bg-green-900/20',
-        border: 'border-green-300 dark:border-green-700',
+        bg: 'bg-green-50',
+        border: 'border-green-300',
         icon: '🌟',
         badge: 'bg-green-600 text-white'
       }
@@ -192,9 +192,11 @@ const StudentNotifications = () => {
       {/* Notification Bell Icon */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
       >
-        <span className="text-2xl">🔔</span>
+        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
         {unreadCount > 0 && (
           <span className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -204,13 +206,18 @@ const StudentNotifications = () => {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 max-h-[600px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-96 max-h-[600px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-600 to-purple-600">
+          <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-white">
-                🔔 Notifications
-              </h3>
+              <div className="flex items-center gap-2">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <h3 className="text-lg font-bold text-white">
+                  Notifications
+                </h3>
+              </div>
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-white hover:bg-white/20 rounded-lg px-2 py-1"
@@ -226,7 +233,7 @@ const StudentNotifications = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 flex gap-2">
+          <div className="p-3 border-b border-gray-200 bg-gray-50 flex gap-2">
             <button
               onClick={generateNotifications}
               disabled={generating}
@@ -237,7 +244,7 @@ const StudentNotifications = () => {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-medium transition-all"
+                className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300:bg-gray-600 text-sm font-medium transition-all"
               >
                 Mark all read
               </button>
@@ -249,25 +256,25 @@ const StudentNotifications = () => {
             {loading ? (
               <div className="p-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">Loading...</p>
+                <p className="text-gray-500 mt-2">Loading...</p>
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-4xl mb-2">📭</p>
-                <p className="text-gray-500 dark:text-gray-400">No notifications yet</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-gray-500">No notifications yet</p>
+                <p className="text-sm text-gray-400 mt-1">
                   Click "Generate AI Alerts" to check your attendance
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-gray-200">
                 {notifications.map((notification) => {
                   const style = getNotificationStyle(notification.type);
                   return (
                     <div
                       key={notification.id}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${
-                        !notification.is_read ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''
+                      className={`p-4 hover:bg-gray-50:bg-gray-750 transition-colors ${
+                        !notification.is_read ? 'bg-blue-50/30' : ''
                       }`}
                     >
                       <div className="flex gap-3">
@@ -285,7 +292,7 @@ const StudentNotifications = () => {
                                 {notification.subject_code}
                               </span>
                               {notification.attendance_percentage !== null && (
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                <span className="text-xs text-gray-500">
                                   {notification.attendance_percentage}%
                                 </span>
                               )}
@@ -293,12 +300,12 @@ const StudentNotifications = () => {
                           )}
 
                           {/* Message */}
-                          <p className={`text-sm ${!notification.is_read ? 'font-semibold' : ''} text-gray-800 dark:text-gray-200 break-words`}>
+                          <p className={`text-sm ${!notification.is_read ? 'font-semibold' : ''} text-gray-800 break-words`}>
                             {notification.message}
                           </p>
 
                           {/* Timestamp */}
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <p className="text-xs text-gray-500 mt-1">
                             {formatDate(notification.created_at)}
                           </p>
                         </div>
@@ -308,7 +315,7 @@ const StudentNotifications = () => {
                           {!notification.is_read && (
                             <button
                               onClick={() => markAsRead(notification.id)}
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs"
+                              className="text-blue-600 hover:text-blue-700:text-blue-300 text-xs"
                               title="Mark as read"
                             >
                               ✓
@@ -316,7 +323,7 @@ const StudentNotifications = () => {
                           )}
                           <button
                             onClick={() => deleteNotification(notification.id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-xs"
+                            className="text-red-600 hover:text-red-700:text-red-300 text-xs"
                             title="Delete"
                           >
                             🗑️

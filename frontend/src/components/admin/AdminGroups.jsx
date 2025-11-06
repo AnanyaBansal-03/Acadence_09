@@ -125,7 +125,7 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -136,8 +136,8 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
                 </svg>
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Group Management</h2>
-                <p className="text-gray-600 dark:text-gray-400">Organize students into groups and manage group assignments</p>
+                <h2 className="text-3xl font-bold text-gray-800">Group Management</h2>
+                <p className="text-gray-600">Organize students into groups and manage group assignments</p>
               </div>
             </div>
             <button
@@ -158,12 +158,12 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
             const studentCount = getStudentsByGroup(group).length;
             const classCount = getClassesByGroup(group).length;
             return (
-              <div key={group} className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div key={group} className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{group}</span>
+                  <span className="text-2xl font-bold text-purple-600">{group}</span>
                   <span className="text-xs text-gray-500">{classCount} classes</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{studentCount} students</p>
+                <p className="text-sm text-gray-600">{studentCount} students</p>
               </div>
             );
           })}
@@ -171,9 +171,9 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel: Unassigned Students */}
-          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+              <h3 className="text-xl font-bold text-gray-800">
                 Unassigned Students ({getUnassignedStudents().length})
               </h3>
             </div>
@@ -184,14 +184,14 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
               placeholder="Search students..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 mb-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg bg-white text-gray-900"
             />
 
             {/* Bulk Assignment Controls */}
             {selectedStudents.length > 0 && (
-              <div className="mb-4 p-4 bg-purple-100 dark:bg-purple-900/30 rounded-lg border border-purple-300 dark:border-purple-700">
+              <div className="mb-4 p-4 bg-purple-100 rounded-lg border border-purple-300">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="font-medium text-gray-700 dark:text-gray-300">
+                  <span className="font-medium text-gray-700">
                     {selectedStudents.length} student(s) selected
                   </span>
                 </div>
@@ -199,7 +199,7 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
                   <select
                     value={selectedGroup}
                     onChange={(e) => setSelectedGroup(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
                   >
                     {availableGroups.map(group => (
                       <option key={group} value={group}>{group}</option>
@@ -220,17 +220,17 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
             <div className="max-h-96 overflow-y-auto">
               {filteredUnassignedStudents.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-300 dark:border-gray-600">
+                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-300">
                     <input
                       type="checkbox"
                       checked={selectedStudents.length === filteredUnassignedStudents.length && filteredUnassignedStudents.length > 0}
                       onChange={toggleSelectAll}
                       className="w-4 h-4"
                     />
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Select All</span>
+                    <span className="text-sm font-medium text-gray-600">Select All</span>
                   </div>
                   {filteredUnassignedStudents.map(student => (
-                    <div key={student.id} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <div key={student.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50:bg-gray-700 transition-colors">
                       <input
                         type="checkbox"
                         checked={selectedStudents.includes(student.id)}
@@ -238,14 +238,14 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
                         className="w-4 h-4"
                       />
                       <div className="flex-1">
-                        <p className="font-medium text-gray-800 dark:text-gray-200">{student.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{student.email}</p>
+                        <p className="font-medium text-gray-800">{student.name}</p>
+                        <p className="text-sm text-gray-500">{student.email}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-gray-500">
                   {getUnassignedStudents().length === 0 ? (
                     <>
                       <svg className="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,8 +262,8 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
           </div>
 
           {/* Right Panel: Group Details */}
-          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Group Details</h3>
+          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Group Details</h3>
             
             {/* Group Tabs */}
             <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
@@ -274,7 +274,7 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     selectedGroup === group
                       ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900/30'
+                      : 'bg-white text-gray-700 hover:bg-purple-100:bg-purple-900/30'
                   }`}
                 >
                   {group}
@@ -285,8 +285,8 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
             {/* Selected Group Info */}
             <div className="space-y-4">
               {/* Classes in this group */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                   </svg>
@@ -295,20 +295,20 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
                 <div className="max-h-40 overflow-y-auto space-y-2">
                   {getClassesByGroup(selectedGroup).length > 0 ? (
                     getClassesByGroup(selectedGroup).map(cls => (
-                      <div key={cls.id} className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-                        <p className="font-medium text-gray-800 dark:text-gray-200">{cls.name}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{cls.day_of_week} • {cls.schedule_time}</p>
+                      <div key={cls.id} className="p-2 bg-blue-50 rounded border border-blue-200">
+                        <p className="font-medium text-gray-800">{cls.name}</p>
+                        <p className="text-xs text-gray-600">{cls.day_of_week} • {cls.schedule_time}</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No classes assigned to {selectedGroup}</p>
+                    <p className="text-sm text-gray-500 text-center py-4">No classes assigned to {selectedGroup}</p>
                   )}
                 </div>
               </div>
 
               {/* Students in this group */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                   <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                   </svg>
@@ -317,10 +317,10 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
                 <div className="max-h-64 overflow-y-auto space-y-2">
                   {getStudentsByGroup(selectedGroup).length > 0 ? (
                     getStudentsByGroup(selectedGroup).map(student => (
-                      <div key={student.id} className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                      <div key={student.id} className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-200">
                         <div>
-                          <p className="font-medium text-gray-800 dark:text-gray-200">{student.name}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">{student.email}</p>
+                          <p className="font-medium text-gray-800">{student.name}</p>
+                          <p className="text-xs text-gray-600">{student.email}</p>
                         </div>
                         <button
                           onClick={() => handleRemoveFromGroup(student.id)}
@@ -331,7 +331,7 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No students in {selectedGroup}</p>
+                    <p className="text-sm text-gray-500 text-center py-4">No students in {selectedGroup}</p>
                   )}
                 </div>
               </div>
