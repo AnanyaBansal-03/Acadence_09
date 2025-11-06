@@ -96,20 +96,24 @@ router.post("/submit-attendance", verifyTeacher, async (req, res) => {
     const toInsert = recordsToInsertOrUpdate.filter(r => !existingStudentIds.has(r.student_id));
     const toUpdate = recordsToInsertOrUpdate.filter(r => existingStudentIds.has(r.student_id));
 
-    // Insert new records
+    // Insert new records with is_submitted = true
     if (toInsert.length > 0) {
+      const recordsWithSubmitted = toInsert.map(r => ({ ...r, is_submitted: true }));
       const { error: insertError } = await supabase
         .from("attendance")
-        .insert(toInsert);
+        .insert(recordsWithSubmitted);
 
       if (insertError) throw insertError;
     }
 
-    // Update existing records
+    // Update existing records and mark as submitted
     for (const record of toUpdate) {
       const { error: updateError } = await supabase
         .from("attendance")
-        .update({ status: record.status })
+        .update({ 
+          status: record.status,
+          is_submitted: true  // Mark as submitted/finalized
+        })
         .eq("class_id", classId)
         .eq("student_id", record.student_id)
         .gte("date", `${attendanceDate}T00:00:00`)

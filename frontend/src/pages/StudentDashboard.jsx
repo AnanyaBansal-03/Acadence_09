@@ -139,7 +139,7 @@ const StudentDashboard = () => {
         courses = [];
       }
 
-      // Fetch attendance - using all enrolled class IDs
+      // Fetch attendance - using all enrolled class IDs (only show submitted attendance)
       if (window._allEnrolledClassIds && window._allEnrolledClassIds.length > 0) {
         try {
           const { data: attendanceData } = await supabase
@@ -147,6 +147,7 @@ const StudentDashboard = () => {
             .select('*')
             .eq('student_id', studentId)
             .in('class_id', window._allEnrolledClassIds)
+            .eq('is_submitted', true)  // Only show finalized attendance
             .order('date', { ascending: false });
           attendance = attendanceData || [];
         } catch (err) {

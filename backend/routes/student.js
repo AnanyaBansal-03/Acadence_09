@@ -67,14 +67,15 @@ router.post("/mark-attendance", verifyToken, async (req, res) => {
       });
     }
 
-    // Insert attendance record
+    // Insert attendance record (pending until teacher submits)
     const { data, error } = await supabase
       .from("attendance")
       .insert({
         student_id: studentId,
         class_id: classId,
         status: "present",
-        date: `${attendanceDate}T${new Date().toISOString().split('T')[1]}`
+        date: `${attendanceDate}T${new Date().toISOString().split('T')[1]}`,
+        is_submitted: false  // Pending until teacher submits
       })
       .select();
 

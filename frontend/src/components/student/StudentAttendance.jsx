@@ -279,7 +279,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
               }
 
               console.log('✅ Attendance marked successfully:', data);
-              alert('✅ Attendance marked successfully!');
+              alert('✅ QR Scanned Successfully!\n\nYour attendance has been recorded.\n\n⏳ Note: Your attendance will be visible after your teacher submits the final attendance for this class.');
               
               // Refresh page to show updated attendance
               window.location.reload();
