@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../lib/apiConfig';
 
 const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh }) => {
   const [classes, setClasses] = useState(initialClasses);
@@ -36,7 +37,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
     setIsCreating(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/classes', {
+      const response = await fetch(`${API_URL}/admin/classes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/classes/${classId}`, {
+      const response = await fetch(`${API_URL}/admin/classes/${classId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

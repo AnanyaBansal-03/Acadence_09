@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../lib/apiConfig';
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -24,7 +25,7 @@ const VerifyEmail = () => {
 
   const verifyEmail = async (token) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/auth/verify-email?token=${token}`);
+      const response = await axios.get(`${API_URL}/auth/verify-email?token=${token}`);
       setStatus('success');
       setMessage(response.data.message);
       
@@ -47,7 +48,7 @@ const VerifyEmail = () => {
     setResendLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/resend-verification', {
+      const response = await axios.post(`${API_URL}/auth/resend-verification`, {
         email: resendEmail
       });
       alert(response.data.message);

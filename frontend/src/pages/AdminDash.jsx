@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { API_URL } from '../lib/apiConfig';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminUsers from '../components/admin/AdminUsers';
 import AdminClasses from '../components/admin/AdminClasses';
@@ -116,15 +117,15 @@ const AdminDashboard = () => {
       };
 
       try {
-        const usersRes = await fetch('http://localhost:5000/api/admin/users', { headers });
+        const usersRes = await fetch(`${API_URL}/admin/users`, { headers });
         const usersData = usersRes.ok ? await usersRes.json() : [];
         console.log('Users Response:', usersRes.status, usersData);
 
-        const classesRes = await fetch('http://localhost:5000/api/admin/classes', { headers });
+        const classesRes = await fetch(`${API_URL}/admin/classes`, { headers });
         const classesData = classesRes.ok ? await classesRes.json() : [];
         console.log('Classes Response:', classesRes.status, classesData);
 
-        const enrollmentsRes = await fetch('http://localhost:5000/api/admin/enrollments', { headers });
+        const enrollmentsRes = await fetch(`${API_URL}/admin/enrollments`, { headers });
         console.log('Enrollments Response Status:', enrollmentsRes.status);
         let enrollmentsData = [];
         

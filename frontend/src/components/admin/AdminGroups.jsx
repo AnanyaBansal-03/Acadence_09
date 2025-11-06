@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../lib/apiConfig';
 
 const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) => {
   const [users, setUsers] = useState(initialUsers);
@@ -63,7 +64,7 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/users/bulk-group', {
+      const response = await fetch(`${API_URL}/admin/users/bulk-group`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +100,7 @@ const AdminGroups = ({ initialUsers = [], initialClasses = [], onDataRefresh }) 
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/group`, {
+      const response = await fetch(`${API_URL}/admin/users/${userId}/group`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

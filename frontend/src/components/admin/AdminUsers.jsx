@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../lib/apiConfig';
 
 const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
   const [users, setUsers] = useState(initialUsers);
@@ -51,7 +52,7 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
     setIsCreating(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch(`${API_URL}/admin/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,7 +90,7 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const response = await fetch(`${API_URL}/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -136,7 +137,7 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/users/bulk-group', {
+      const response = await fetch(`${API_URL}/admin/users/bulk-group`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

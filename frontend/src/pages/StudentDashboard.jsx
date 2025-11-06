@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../lib/apiConfig';
 import StudentAttendance from '../components/student/StudentAttendance';
 import StudentGrades from '../components/student/StudentGrades';
 import StudentCourses from '../components/student/StudentCourses';
@@ -156,7 +157,7 @@ const StudentDashboard = () => {
       // Fetch marks/grades from backend API
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5000/api/student/marks', {
+        const response = await fetch(`${API_URL}/student/marks`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

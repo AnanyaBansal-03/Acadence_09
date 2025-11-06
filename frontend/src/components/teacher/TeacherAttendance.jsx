@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '../../lib/supabaseClient';
+import { API_URL } from '../../lib/apiConfig';
 
 const TeacherAttendance = ({ attendanceStats, allClasses }) => {
   const [selectedClass, setSelectedClass] = useState('');
@@ -221,7 +222,7 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
         status: record.status
       }));
 
-      const response = await fetch('http://localhost:5000/api/teacher/submit-attendance', {
+      const response = await fetch(`${API_URL}/teacher/submit-attendance`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

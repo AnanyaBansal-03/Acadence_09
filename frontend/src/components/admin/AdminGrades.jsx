@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../lib/apiConfig';
 
 const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasses = [], onDataRefresh }) => {
   const [students, setStudents] = useState(initialUsers.filter(u => u.role === 'student'));
@@ -76,7 +77,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
       
       // Fetch marks for all class sessions of this subject
       const marksPromises = subject.classIds.map(classId =>
-        fetch(`http://localhost:5000/api/admin/marks?classId=${classId}`, {
+        fetch(`${API_URL}/admin/marks?classId=${classId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => res.json())
       );
@@ -160,7 +161,7 @@ const AdminGrades = ({ initialEnrollments = [], initialUsers = [], initialClasse
     setIsUpdating(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/marks/${classId}/${studentId}`, {
+      const response = await fetch(`${API_URL}/admin/marks/${classId}/${studentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

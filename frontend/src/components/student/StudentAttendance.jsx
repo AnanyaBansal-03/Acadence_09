@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import QRScanner from './QRScanner';
 import { supabase } from '../../lib/supabaseClient';
+import { API_URL } from '../../lib/apiConfig';
 
 const StudentAttendance = ({ attendance, courses, loading, error }) => {
   const [selectedCourse, setSelectedCourse] = useState('all');
@@ -251,7 +252,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
             }
 
             try {
-              const response = await fetch('http://localhost:5000/api/student/mark-attendance', {
+              const response = await fetch(`${API_URL}/student/mark-attendance`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,

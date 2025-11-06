@@ -190,7 +190,7 @@ Should create a `dist` folder without errors.
 - Install Command: `npm install`
 
 **Environment Variables:**
-Click **Add** and enter:
+Click **Add** and enter:-p
 ```
 VITE_API_URL = https://acadence-backend.onrender.com
 ```

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../lib/apiConfig';
 
 const AdminEnrollments = ({ initialEnrollments = [], initialUsers = [], initialClasses = [], onDataRefresh }) => {
   const [enrollments, setEnrollments] = useState(initialEnrollments);
@@ -75,7 +76,7 @@ const AdminEnrollments = ({ initialEnrollments = [], initialUsers = [], initialC
       }
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/enrollments', {
+      const response = await fetch(`${API_URL}/admin/enrollments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +155,7 @@ const AdminEnrollments = ({ initialEnrollments = [], initialUsers = [], initialC
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/admin/enrollments/subject', {
+      const response = await fetch(`${API_URL}/admin/enrollments/subject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -227,7 +228,7 @@ ${result.details.classes.join('\n')}
       
       // Delete all enrollments for this subject
       const deletePromises = enrollmentIds.map(id =>
-        fetch(`http://localhost:5000/api/admin/enrollments/${id}`, {
+        fetch(`${API_URL}/admin/enrollments/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

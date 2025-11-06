@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { API_URL } from '../../lib/apiConfig';
 
 const TeacherMarks = ({ allClasses, teacherName }) => {
   const [selectedSubject, setSelectedSubject] = useState('');
@@ -237,7 +238,7 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
 
       // Call backend API to upload marks for all sessions
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/teacher/upload-marks-bulk', {
+      const response = await fetch(`${API_URL}/teacher/upload-marks-bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
