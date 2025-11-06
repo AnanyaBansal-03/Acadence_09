@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getClassStatus } from '../../lib/classStatus';
 
 // Timetable View Component
 const TimetableView = ({ courses }) => {
@@ -341,39 +342,42 @@ const StudentCourses = ({ courses, loading, error }) => {
             </p>
           ) : (
             <ul className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredCourses.map((course) => (
-                <li key={course.id} className="flex justify-between items-start py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-gray-700 dark:text-gray-300 font-bold text-lg">
-                        {course.subject_code || course.name}
-                      </span>
-                      {course.group_name && (
-                        <span className="px-2 py-0.5 bg-purple-500 text-white rounded text-xs font-bold">
-                          {course.group_name}
+              {filteredCourses.map((course) => {
+                const classStatus = getClassStatus(course);
+                return (
+                  <li key={course.id} className="flex justify-between items-start py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-gray-700 dark:text-gray-300 font-bold text-lg">
+                          {course.subject_code || course.name}
                         </span>
+                        {course.group_name && (
+                          <span className="px-2 py-0.5 bg-purple-500 text-white rounded text-xs font-bold">
+                            {course.group_name}
+                          </span>
+                        )}
+                      </div>
+                      {course.sessions && course.sessions.length > 0 && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
+                          <div className="font-semibold text-gray-600 dark:text-gray-300">
+                            📅 {course.sessions.length} session{course.sessions.length !== 1 ? 's' : ''} per week:
+                          </div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {course.sessions.map((session, idx) => (
+                              <div key={idx} className="text-blue-600 dark:text-blue-400">
+                                • {session.day_of_week} at {session.start_time}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
-                    {course.sessions && course.sessions.length > 0 && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
-                        <div className="font-semibold text-gray-600 dark:text-gray-300">
-                          📅 {course.sessions.length} session{course.sessions.length !== 1 ? 's' : ''} per week:
-                        </div>
-                        <div className="grid grid-cols-2 gap-1">
-                          {course.sessions.map((session, idx) => (
-                            <div key={idx} className="text-blue-600 dark:text-blue-400">
-                              • {session.day_of_week} at {session.start_time}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full dark:bg-blue-900 dark:text-blue-200 ml-2">
-                    Ongoing
-                  </span>
-                </li>
-              ))}
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ml-2 ${classStatus.cssClass}`}>
+                      {classStatus.label}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

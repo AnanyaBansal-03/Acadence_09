@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../../lib/apiConfig';
+import { getClassStatus, calculateEndTime } from '../../lib/classStatus';
 
 const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh }) => {
   const [classes, setClasses] = useState(initialClasses);
@@ -351,40 +352,9 @@ const AdminClasses = ({ initialClasses = [], initialUsers = [], onDataRefresh })
             </thead>
             <tbody>
               {classes.map((cls) => {
-                const getClassStatus = () => {
-                  const startTime = cls.start_time || cls.schedule_time; // Support both column names
-                  if (!startTime || !cls.duration_hours) return { label: 'Unknown', color: 'gray' };
-                  
-                  const now = new Date();
-                  const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                  const currentDay = daysOfWeek[now.getDay()];
-                  const currentTime = now.getHours() * 60 + now.getMinutes();
-                  
-                  const [hours, minutes] = startTime.split(':').map(Number);
-                  const startTimeMinutes = hours * 60 + minutes;
-                  const endTime = startTimeMinutes + (cls.duration_hours * 60);
-                  
-                  const daysMatch = currentDay === cls.day_of_week?.toLowerCase();
-                  
-                  if (daysMatch && currentTime >= startTimeMinutes && currentTime < endTime) {
-                    return { label: 'Ongoing', color: 'green' };
-                  } else if (daysMatch && currentTime >= endTime) {
-                    return { label: 'Ended', color: 'red' };
-                  } else {
-                    return { label: 'Upcoming', color: 'blue' };
-                  }
-                };
-
-                const status = getClassStatus();
-                const startTime = cls.start_time || cls.schedule_time; // Support both column names
-                const endTime = startTime && cls.duration_hours ? 
-                  (() => {
-                    const [hours, minutes] = startTime.split(':').map(Number);
-                    const totalMinutes = hours * 60 + minutes + (cls.duration_hours * 60);
-                    const endHours = Math.floor(totalMinutes / 60) % 24;
-                    const endMinutes = totalMinutes % 60;
-                    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
-                  })() : '';
+                const status = getClassStatus(cls);
+                const startTime = cls.start_time || cls.schedule_time;
+                const endTime = calculateEndTime(startTime, cls.duration_hours);
 
                 return (
                   <tr key={cls.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
