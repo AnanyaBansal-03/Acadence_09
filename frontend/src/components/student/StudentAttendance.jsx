@@ -251,6 +251,8 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
               return;
             }
 
+            console.log('📱 Marking attendance for class:', classId, 'date:', payload.date);
+
             try {
               const response = await fetch(`${API_URL}/student/mark-attendance`, {
                 method: 'POST',
@@ -267,11 +269,18 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
               const data = await response.json();
 
               if (!response.ok) {
-                alert(data.message || 'Failed to mark attendance');
+                // Check if it's a duplicate attendance
+                if (response.status === 409) {
+                  alert('⚠️ Attendance Already Marked!\n\nYou have already marked your attendance for this class today.\n\nStatus: ' + (data.status || 'present').toUpperCase());
+                } else {
+                  alert(data.message || 'Failed to mark attendance');
+                }
                 return;
               }
 
+              console.log('✅ Attendance marked successfully:', data);
               alert('✅ Attendance marked successfully!');
+              
               // Refresh page to show updated attendance
               window.location.reload();
             } catch (e) {

@@ -11,6 +11,7 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState('disconnected'); // 'disconnected', 'connecting', 'connected'
 
   // Fetch real attendance records when class or date changes
   useEffect(() => {
@@ -92,53 +93,94 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
 
   // Realtime subscription: update attendanceRecords when students mark attendance
   useEffect(() => {
-    if (!selectedClass) return;
+    if (!selectedClass || !attendanceDate) return;
 
-    const channelName = `attendance-class-${selectedClass}`;
+    console.log('🔔 Setting up realtime subscription for class:', selectedClass, 'date:', attendanceDate);
+    setRealtimeStatus('connecting');
+
+    const channelName = `attendance-class-${selectedClass}-${attendanceDate}`;
     const channel = supabase
       .channel(channelName)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attendance', filter: `class_id=eq.${selectedClass}` }, (payload) => {
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'attendance', 
+        filter: `class_id=eq.${selectedClass}` 
+      }, (payload) => {
         const a = payload.new;
+        console.log('🔔 Realtime INSERT received:', a);
+        
         // Only update if the attendance date matches the selected date
         try {
           const aDate = new Date(a.date).toISOString().slice(0,10);
-          if (aDate !== attendanceDate) return;
+          console.log('📅 Comparing dates - received:', aDate, 'selected:', attendanceDate);
+          
+          if (aDate !== attendanceDate) {
+            console.log('⏭️ Skipping - date mismatch');
+            return;
+          }
 
           setAttendanceRecords(prev => {
             const idx = prev.findIndex(r => String(r.id) === String(a.student_id));
-            const newRec = {
-              id: a.student_id,
-              studentName: prev[idx]?.studentName || 'Student',
-              status: a.status,
-              time: a.created_at ? new Date(a.created_at).toLocaleTimeString() : '-',
-              attendanceId: a.id
-            };
-
+            console.log('👤 Student index found:', idx, 'for student_id:', a.student_id);
+            
             if (idx >= 0) {
               const copy = [...prev];
-              copy[idx] = { ...copy[idx], ...newRec };
+              copy[idx] = { 
+                ...copy[idx], 
+                status: a.status,
+                time: new Date().toLocaleTimeString(),
+                attendanceId: a.id
+              };
+              console.log('✅ Updated attendance record for:', copy[idx].studentName);
               return copy;
+            } else {
+              console.log('⚠️ Student not found in records list');
+              return prev;
             }
-            return [...prev, newRec];
           });
         } catch (e) {
-          console.error('Realtime insert handling error:', e);
+          console.error('❌ Realtime insert handling error:', e);
         }
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'attendance', filter: `class_id=eq.${selectedClass}` }, (payload) => {
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'attendance', 
+        filter: `class_id=eq.${selectedClass}` 
+      }, (payload) => {
         const a = payload.new;
+        console.log('🔔 Realtime UPDATE received:', a);
+        
         try {
           const aDate = new Date(a.date).toISOString().slice(0,10);
-          if (aDate !== attendanceDate) return;
+          if (aDate !== attendanceDate) {
+            console.log('⏭️ Skipping update - date mismatch');
+            return;
+          }
 
-          setAttendanceRecords(prev => prev.map(r => r.id === a.student_id ? { ...r, status: a.status, attendanceId: a.id, time: a.updated_at ? new Date(a.updated_at).toLocaleTimeString() : r.time } : r));
+          setAttendanceRecords(prev => prev.map(r => 
+            r.id === a.student_id 
+              ? { ...r, status: a.status, attendanceId: a.id, time: new Date().toLocaleTimeString() } 
+              : r
+          ));
+          console.log('✅ Updated attendance status via realtime');
         } catch (e) {
-          console.error('Realtime update handling error:', e);
+          console.error('❌ Realtime update handling error:', e);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          setRealtimeStatus('connected');
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setRealtimeStatus('disconnected');
+        }
+      });
 
     return () => {
+      console.log('🔌 Unsubscribing from realtime channel');
+      setRealtimeStatus('disconnected');
       try { supabase.removeChannel(channel); } catch (e) { /* ignore */ }
     };
   }, [selectedClass, attendanceDate]);
@@ -407,7 +449,39 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
         {/* Attendance Records Table */}
         {selectedClass && (
           <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50 mt-6">
-            <h4 className="font-semibold mb-4 text-gray-800">Attendance Records</h4>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-3">
+                <h4 className="font-semibold text-gray-800">Attendance Records - {attendanceDate}</h4>
+                {/* Realtime Status Indicator */}
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    realtimeStatus === 'connected' ? 'bg-green-500 animate-pulse' : 
+                    realtimeStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 
+                    'bg-red-500'
+                  }`}></div>
+                  <span className={`text-xs ${
+                    realtimeStatus === 'connected' ? 'text-green-600' : 
+                    realtimeStatus === 'connecting' ? 'text-yellow-600' : 
+                    'text-red-600'
+                  }`}>
+                    {realtimeStatus === 'connected' ? 'Live Updates Active' : 
+                     realtimeStatus === 'connecting' ? 'Connecting...' : 
+                     'Offline'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={fetchAttendanceRecords}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition-all duration-200 flex items-center gap-2"
+                title="Refresh attendance records"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
