@@ -5,7 +5,9 @@ const adminRoutes = require("./routes/admin");
 const studentRoutes = require("./routes/student");
 const teacherRoutes = require("./routes/teacher");
 const notificationRoutes = require("./routes/notifications");
+const integrationsRoutes = require("./routes/integrations");
 const { initializeWeeklyScheduler } = require("./services/weeklyScheduler");
+const integrationSyncService = require("./services/integrationSyncService");
 require("dotenv").config();
 const supabase = require("./db"); // ✅ This is now Supabase
 
@@ -55,6 +57,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/integrations", integrationsRoutes);
 
 // ✅ ADD THESE ROUTES:
 app.get('/', (req, res) => {
@@ -227,4 +230,9 @@ app.listen(PORT, () => {
   console.log('\n📅 Initializing weekly attendance notification scheduler...');
   initializeWeeklyScheduler();
   console.log('💡 Tip: Use GET /api/notifications/test-weekly-email to test emails');
+  
+  // Initialize Google Classroom auto-sync service
+  console.log('\n🔗 Initializing Google Classroom auto-sync service...');
+  integrationSyncService.start();
+  console.log('💡 Syncs run every 3 hours for all connected users');
 });
