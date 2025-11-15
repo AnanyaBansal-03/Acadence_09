@@ -19,9 +19,14 @@ const AdminEnrollments = ({ initialEnrollments = [], initialUsers = [], initialC
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     setEnrollments(initialEnrollments);
+    setCurrentPage(1); // Reset to first page when enrollments change
   }, [initialEnrollments]);
 
   useEffect(() => {
@@ -144,6 +149,24 @@ const AdminEnrollments = ({ initialEnrollments = [], initialUsers = [], initialC
 
   const groupedEnrollments = getGroupedEnrollments();
 
+  // Pagination calculations
+  const totalItems = groupedEnrollments.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEnrollments = groupedEnrollments.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1); // Reset to first page
+  };
+
   const handleBulkEnrollment = async (e) => {
     e.preventDefault();
     if (!bulkFormData.subject_code || !bulkFormData.group_name || bulkFormData.student_ids.length === 0) {
@@ -254,6 +277,27 @@ ${result.details.classes.join('\n')}
     }
   };
 
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
@@ -279,6 +323,29 @@ ${result.details.classes.join('\n')}
           </div>
         </div>
 
+        {/* Pagination Controls - Top */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Show:</label>
+              <select
+                value={itemsPerPage}
+                onChange={handleItemsPerPageChange}
+                className="px-2 py-1 border border-gray-300 rounded text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-600">per page</span>
+            </div>
+            <span className="text-sm text-gray-600">
+              Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} enrollments
+            </span>
+          </div>
+        </div>
+
         {/* Enrollments Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -292,7 +359,7 @@ ${result.details.classes.join('\n')}
               </tr>
             </thead>
             <tbody>
-              {groupedEnrollments.map((enrollment) => (
+              {currentEnrollments.map((enrollment) => (
                 <tr key={`${enrollment.student_id}_${enrollment.subject_code}_${enrollment.group_name}`} className="border-b border-gray-100 hover:bg-gray-50:bg-gray-700">
                   <td className="px-4 py-3 text-gray-800 font-medium">
                     {enrollment.student_name || 'Unknown'}
@@ -323,6 +390,67 @@ ${result.details.classes.join('\n')}
         {groupedEnrollments.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No enrollments yet
+          </div>
+        )}
+
+        {/* Pagination Controls - Bottom */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-1">
+              {/* First Page */}
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                «
+              </button>
+              
+              {/* Previous Page */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                ‹
+              </button>
+
+              {/* Page Numbers */}
+              {getPageNumbers().map(page => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 border text-sm ${
+                    currentPage === page
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  } rounded`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {/* Next Page */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                ›
+              </button>
+              
+              {/* Last Page */}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                »
+              </button>
+            </div>
           </div>
         )}
 

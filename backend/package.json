@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/local-auth": "^3.0.1",
     "@supabase/supabase-js": "^2.76.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
