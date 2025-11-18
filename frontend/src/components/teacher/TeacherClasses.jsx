@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import Pagination from '../common/Pagination';
 
 const TeacherClasses = ({ allClasses, teacherName }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDay, setFilterDay] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Filter classes based on search and day filter
   const filteredClasses = allClasses.filter(cls => {
@@ -58,31 +61,40 @@ const TeacherClasses = ({ allClasses, teacherName }) => {
 
         {/* Classes Table */}
         <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50">
-          <div className="flex justify-between items-center mb-4">
+          <div className="mb-4">
             <h4 className="font-semibold text-gray-800">Your Classes</h4>
-            <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg text-sm hover:from-blue-600 hover:to-purple-700 transition-all duration-200">
-              Add New Class
-            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="text-left text-gray-500 border-b border-gray-200">
-                  <th className="pb-3">Class Name</th>
-                  <th className="pb-3">Time</th>
-                  <th className="pb-3">Day</th>
+                  <th className="pb-3">Subject</th>
+                  <th className="pb-3">Sessions/Week</th>
+                  <th className="pb-3">Days</th>
                   <th className="pb-3">Group</th>
-                  <th className="pb-3">Enrolled Students</th>
-                  <th className="pb-3">Actions</th>
+                  <th className="pb-3">Total Students</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredClasses.length > 0 ? (
-                  filteredClasses.map((cls, index) => (
+                  filteredClasses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((cls, index) => (
                     <tr key={cls.id || index} className="hover:bg-gray-50 transition-colors">
                       <td className="py-3 text-gray-800 font-medium">{cls.name}</td>
-                      <td className="py-3 text-gray-600">{cls.schedule_time || cls.time}</td>
-                      <td className="py-3 text-gray-600 capitalize">{cls.day_of_week}</td>
+                      <td className="py-3 text-gray-600">
+                        {cls.sessions && cls.sessions.length > 0 ? (
+                          <div className="space-y-1">
+                            <div className="font-semibold text-blue-600">{cls.sessions.length} sessions</div>
+                            {cls.sessions.map((session, idx) => (
+                              <div key={idx} className="text-xs text-gray-500">
+                                {session.day_of_week} at {session.schedule_time || session.start_time}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span>{cls.schedule_time || cls.time || '-'}</span>
+                        )}
+                      </td>
+                      <td className="py-3 text-gray-600 capitalize text-sm">{cls.day_of_week || '-'}</td>
                       <td className="py-3">
                         {cls.group_name ? (
                           <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -92,22 +104,12 @@ const TeacherClasses = ({ allClasses, teacherName }) => {
                           <span className="text-gray-400 text-xs">-</span>
                         )}
                       </td>
-                      <td className="py-3 text-gray-600">{cls.enrolled_count || 0}</td>
-                      <td className="py-3">
-                        <div className="flex gap-2">
-                          <button className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 text-sm">
-                            View
-                          </button>
-                          <button className="px-3 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200 text-sm">
-                            Edit
-                          </button>
-                        </div>
-                      </td>
+                      <td className="py-3 text-gray-600 font-bold text-lg">{cls.enrolled_count || 0}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="py-8 text-center text-gray-500">
+                    <td colSpan="5" className="py-8 text-center text-gray-500">
                       <div className="flex flex-col items-center">
                         <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -123,6 +125,17 @@ const TeacherClasses = ({ allClasses, teacherName }) => {
               </tbody>
             </table>
           </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredClasses.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(newSize) => {
+              setItemsPerPage(newSize);
+              setCurrentPage(1);
+            }}
+          />
         </div>
 
         {/* Summary Cards */}

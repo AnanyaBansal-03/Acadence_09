@@ -5,7 +5,7 @@ import { API_URL } from '../lib/apiConfig';
 import StudentAttendance from '../components/student/StudentAttendance';
 import StudentGrades from '../components/student/StudentGrades';
 import StudentCourses from '../components/student/StudentCourses';
-import StudentIntegrations from '../components/student/StudentIntegrations';
+import StudentAssignments from '../components/student/StudentAssignments';
 
 const StudentDashboard = () => {
   const [activeFeature, setActiveFeature] = useState('home');
@@ -248,42 +248,26 @@ const StudentDashboard = () => {
         return <StudentGrades grades={dashboardData.grades} courses={dashboardData.courses} loading={loading} error={error} />;
       case 'courses':
         return <StudentCourses courses={dashboardData.courses} loading={loading} error={error} />;
-      case 'integrations':
-        return <StudentIntegrations />;
       case 'assignments':
-        // For assignments, show placeholder
         return (
           <div className="w-full max-w-6xl mx-auto pt-8">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {activeFeature === 'courses' ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    )}
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                   </svg>
                 </div>
                 <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {activeFeature === 'courses' ? 'My Courses' : 'Assignments'}
+                  Assignments
                 </h2>
-                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                  {activeFeature === 'courses'
-                    ? 'View all your enrolled courses and schedules.'
-                    : 'Manage and submit your assignments.'}
-                </p>
               </div>
-              <div className="text-center py-8 text-gray-500">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {activeFeature === 'courses' ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                  )}
-                </svg>
-                <p>Feature coming soon...</p>
-              </div>
+              <StudentAssignments 
+                assignments={dashboardData.assignments} 
+                courses={dashboardData.courses} 
+                loading={loading} 
+                error={error} 
+              />
             </div>
           </div>
         );
@@ -463,11 +447,6 @@ const Sidebar = ({ isOpen, activeFeature, onFeatureClick, onClose }) => {
       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
       </svg>
-    )},
-    { key: 'integrations', label: 'Connected Apps', color: 'from-purple-400 to-purple-600', icon: (
-      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-      </svg>
     )}
   ];
 
@@ -521,11 +500,6 @@ const WelcomePage = ({ onFeatureClick, studentData }) => {
     { key: 'grades', label: 'Grades', description: 'View your marks and academic performance', color: 'from-indigo-400 to-blue-600', icon: (
       <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-      </svg>
-    )},
-    { key: 'integrations', label: 'Connected Apps', description: 'Connect Google Classroom and other platforms', color: 'from-purple-400 to-purple-600', icon: (
-      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
       </svg>
     )}
   ];

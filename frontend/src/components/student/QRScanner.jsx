@@ -10,13 +10,34 @@ const QRScanner = ({ onScan, onClose, fps = 10, qrbox = 250 }) => {
   const scannerInstanceRef = useRef(null);
   const isRunningRef = useRef(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [errorType, setErrorType] = useState(null);
   const [facingMode, setFacingMode] = useState('environment'); // 'environment' (back) or 'user' (front)
+  const [isSecureContext, setIsSecureContext] = useState(true);
 
   useEffect(() => {
+    // Check if running in secure context (HTTPS or localhost)
+    const isSecure = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    setIsSecureContext(isSecure);
+    
+    if (!isSecure) {
+      setErrorMsg('Camera access requires HTTPS connection');
+      setErrorType('https');
+      setTimeout(() => onScan(null, new Error('HTTPS required')), 500);
+      return;
+    }
+
     const config = { fps, qrbox };
 
     async function startScanner() {
       try {
+        // Check if camera is available
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasCamera = devices.some(device => device.kind === 'videoinput');
+        
+        if (!hasCamera) {
+          throw new Error('No camera found on this device');
+        }
+
         const html5QrcodeScanner = new Html5Qrcode(containerId.current);
         scannerInstanceRef.current = html5QrcodeScanner;
         
@@ -38,7 +59,19 @@ const QRScanner = ({ onScan, onClose, fps = 10, qrbox = 250 }) => {
       } catch (err) {
         console.error('QR Scanner start failed:', err);
         isRunningRef.current = false;
-        setErrorMsg(err.message || 'Camera access denied or not available');
+        
+        // Determine error type
+        if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
+          setErrorType('permission');
+          setErrorMsg('Camera permission denied. Please allow camera access in your browser settings.');
+        } else if (err.message.includes('camera')) {
+          setErrorType('camera');
+          setErrorMsg('No camera found or camera is being used by another app.');
+        } else {
+          setErrorType('unknown');
+          setErrorMsg(err.message || 'Camera access failed');
+        }
+        
         // Notify parent about error
         setTimeout(() => onScan(null, err), 500);
       }
@@ -68,6 +101,8 @@ const QRScanner = ({ onScan, onClose, fps = 10, qrbox = 250 }) => {
   }, [onScan, fps, qrbox, facingMode]);
 
   const handleFlipCamera = async () => {
+    if (errorMsg) return; // Don't flip if there's an error
+    
     // Stop current scanner
     if (isRunningRef.current && scannerInstanceRef.current) {
       try {
@@ -83,20 +118,68 @@ const QRScanner = ({ onScan, onClose, fps = 10, qrbox = 250 }) => {
     setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
   };
 
+  const getErrorSolution = () => {
+    switch (errorType) {
+      case 'https':
+        return (
+          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+            <p className="font-semibold text-yellow-800">🔒 Solution:</p>
+            <p className="text-yellow-700 mt-1">Camera access requires a secure HTTPS connection. Please make sure you're accessing the site via HTTPS.</p>
+          </div>
+        );
+      case 'permission':
+        return (
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+            <p className="font-semibold text-blue-800">📱 Solution:</p>
+            <ul className="text-blue-700 mt-2 space-y-1 list-disc list-inside">
+              <li>Click the camera icon in your browser's address bar</li>
+              <li>Select "Allow" for camera access</li>
+              <li>Refresh the page and try again</li>
+              <li>On mobile: Check Settings → Safari/Chrome → Camera permissions</li>
+            </ul>
+          </div>
+        );
+      case 'camera':
+        return (
+          <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm">
+            <p className="font-semibold text-purple-800">📷 Solution:</p>
+            <ul className="text-purple-700 mt-2 space-y-1 list-disc list-inside">
+              <li>Close other apps using the camera</li>
+              <li>Try restarting your browser</li>
+              <li>Make sure no other tab is using the camera</li>
+            </ul>
+          </div>
+        );
+      default:
+        return (
+          <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+            <p className="font-semibold text-gray-800">💡 Try:</p>
+            <ul className="text-gray-700 mt-2 space-y-1 list-disc list-inside">
+              <li>Refresh the page</li>
+              <li>Allow camera permissions</li>
+              <li>Try a different browser</li>
+            </ul>
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-white rounded-lg p-4 w-[92%] max-w-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-white rounded-lg p-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {errorMsg ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-red-800 font-semibold">❌ Camera Error</p>
-            <p className="text-red-600 text-sm mt-2">{errorMsg}</p>
-            <p className="text-red-600 text-sm mt-2">Please allow camera access and try again, or ask your teacher to generate a new QR code.</p>
+          <div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800 font-semibold text-lg">❌ Camera Error</p>
+              <p className="text-red-600 mt-2">{errorMsg}</p>
+            </div>
+            {getErrorSolution()}
           </div>
         ) : (
           <div>
-            <div id={containerId.current} ref={scannerRef} />
-            <p className="text-center text-sm text-gray-600 mt-3">
-              Point your camera at the QR code
+            <div id={containerId.current} ref={scannerRef} className="rounded-lg overflow-hidden" />
+            <p className="text-center text-sm text-gray-600 mt-3 font-medium">
+              📱 Point your camera at the QR code
             </p>
           </div>
         )}

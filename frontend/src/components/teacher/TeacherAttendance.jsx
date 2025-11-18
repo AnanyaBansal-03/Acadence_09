@@ -13,6 +13,9 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
   const [submitting, setSubmitting] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState('disconnected'); // 'disconnected', 'connecting', 'connected'
 
+  // Safety checks
+  const safeClasses = Array.isArray(allClasses) ? allClasses : [];
+
   // Fetch real attendance records when class or date changes
   useEffect(() => {
     if (selectedClass && attendanceDate) {
@@ -226,7 +229,7 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
       return;
     }
 
-    const classInfo = allClasses.find(cls => cls.id === parseInt(selectedClass));
+    const classInfo = safeClasses.find(cls => cls.id === parseInt(selectedClass));
     const qrData = {
       classId: selectedClass,
       className: classInfo?.name,
@@ -341,14 +344,14 @@ const TeacherAttendance = ({ attendanceStats, allClasses }) => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Choose a class...</option>
-                {allClasses.map((cls) => (
+                {safeClasses.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     {cls.name} [{cls.group_name || 'No Group'}] - {cls.day_of_week} {cls.schedule_time || cls.time}
                   </option>
                 ))}
               </select>
               {selectedClass && (() => {
-                const selectedClassData = allClasses.find(c => c.id === parseInt(selectedClass));
+                const selectedClassData = safeClasses.find(c => c.id === parseInt(selectedClass));
                 if (selectedClassData?.group_name) {
                   return (
                     <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">

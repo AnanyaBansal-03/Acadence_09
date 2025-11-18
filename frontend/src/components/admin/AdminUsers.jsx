@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../../lib/apiConfig';
+import Pagination from '../common/Pagination';
 
 const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
   const [users, setUsers] = useState(initialUsers);
@@ -13,6 +14,8 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [bulkGroup, setBulkGroup] = useState('G1');
   const availableGroups = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9', 'G10'];
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     console.log('AdminUsers - initialUsers received:', initialUsers);
@@ -229,7 +232,7 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
+              {filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((user) => (
                 <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50:bg-gray-700">
                   <td className="px-4 py-3">
                     {user.role === 'student' && (
@@ -277,6 +280,17 @@ const AdminUsers = ({ loading, error, initialUsers = [], onDataRefresh }) => {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredUsers.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={(newSize) => {
+            setItemsPerPage(newSize);
+            setCurrentPage(1);
+          }}
+        />
 
         {filteredUsers.length === 0 && (
           <div className="text-center py-8 text-gray-500">

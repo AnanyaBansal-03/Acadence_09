@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { API_URL } from '../../lib/apiConfig';
+import Pagination from '../common/Pagination';
 
 const TeacherMarks = ({ allClasses, teacherName }) => {
   const [selectedSubject, setSelectedSubject] = useState('');
@@ -9,6 +11,8 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const sections = [
     { value: 'st1', label: 'ST1 (Sessional Test 1)', column: 'st1_marks' },
@@ -237,7 +241,7 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
 
       // Call backend API to upload marks for all sessions
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/teacher/upload-marks-bulk', {
+      const response = await fetch(`${API_URL}/teacher/upload-marks-bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -419,7 +423,7 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {marksData.length > 0 ? (
-                      marksData.map((item, index) => (
+                      marksData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
                         <tr key={index} className="hover:bg-gray-50 transition-colors">
                           <td className="py-3 px-4 text-gray-800 font-bold">{item.roll_number}</td>
                           <td className="py-3 px-4 text-gray-800 font-medium">{item.student_name}</td>
@@ -468,6 +472,17 @@ const TeacherMarks = ({ allClasses, teacherName }) => {
                   </tbody>
                 </table>
               </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalItems={marksData.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={(newSize) => {
+                  setItemsPerPage(newSize);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
 
             {/* Save Button */}

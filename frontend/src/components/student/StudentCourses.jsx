@@ -194,8 +194,9 @@ const TimetableView = ({ courses }) => {
       {/* Timetable Stats */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Total Classes</p>
+          <p className="text-sm text-gray-600">Enrolled Subjects</p>
           <p className="text-2xl font-bold text-blue-600">{courses.length}</p>
+          <p className="text-xs text-gray-500 mt-1">All sessions included</p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg">
           <p className="text-sm text-gray-600">This Week</p>
@@ -360,8 +361,9 @@ const StudentCourses = ({ courses, loading, error }) => {
         {/* Current Courses */}
         <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-800">
-            Enrolled Subjects ({filteredCourses.length})
+            My Subjects ({filteredCourses.length})
           </h3>
+          <p className="text-xs text-gray-500 mb-4">Each subject includes all weekly sessions</p>
           {filteredCourses.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
               {searchTerm ? 'No subjects match your search' : 'No subjects enrolled yet'}

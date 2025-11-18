@@ -273,10 +273,51 @@ const TeacherDashboard = () => {
     return {
       classSchedule,
       attendanceStats,
-      allClasses: classes?.map(cls => ({
-        ...cls,
-        enrolled_count: students.filter(s => s.classId === cls.id).length
-      })) || [],
+      allClasses: (() => {
+        // Group classes by subject_code
+        const subjectsMap = {};
+        classes?.forEach(cls => {
+          const subjectCode = cls.subject_code || cls.name?.split(' ')[0] || cls.name;
+          if (!subjectsMap[subjectCode]) {
+            subjectsMap[subjectCode] = {
+              id: cls.id, // Use first class id
+              name: subjectCode,
+              subject_code: subjectCode,
+              teacher_id: cls.teacher_id,
+              group_name: cls.group_name,
+              sessions: [],
+              allClassIds: [],
+              enrolled_count: 0
+            };
+          }
+          // Add session details
+          subjectsMap[subjectCode].sessions.push({
+            id: cls.id,
+            day_of_week: cls.day_of_week,
+            schedule_time: cls.schedule_time,
+            start_time: cls.start_time,
+            duration_hours: cls.duration_hours
+          });
+          subjectsMap[subjectCode].allClassIds.push(cls.id);
+        });
+
+        // Calculate total enrolled students for each subject (unique students across all sessions)
+        Object.values(subjectsMap).forEach(subject => {
+          const uniqueStudentIds = new Set();
+          subject.allClassIds.forEach(classId => {
+            students.filter(s => s.classId === classId).forEach(s => uniqueStudentIds.add(s.id));
+          });
+          subject.enrolled_count = uniqueStudentIds.size;
+          
+          // Set a representative time for display (first session's time)
+          if (subject.sessions.length > 0) {
+            subject.schedule_time = subject.sessions[0].schedule_time;
+            subject.day_of_week = subject.sessions.map(s => s.day_of_week).join(', ');
+          }
+        });
+
+        return Object.values(subjectsMap);
+      })() || [],
       allStudents: uniqueStudents
     };
   };

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import Pagination from '../common/Pagination';
 
 const TeacherStudents = ({ allStudents, allClasses }) => {
   const [selectedClass, setSelectedClass] = useState(allClasses?.length > 0 ? allClasses[0].id : null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const currentClass = allClasses?.find(c => c.id === selectedClass);
 
@@ -120,7 +123,7 @@ const TeacherStudents = ({ allStudents, allClasses }) => {
                 </thead>
                 <tbody>
                   {classStudents.length > 0 ? (
-                    classStudents.map((student) => (
+                    classStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((student) => (
                       <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50:bg-gray-700/50">
                         <td className="px-6 py-4 text-sm font-medium">
                           <div className="flex items-center gap-3">
@@ -154,9 +157,16 @@ const TeacherStudents = ({ allStudents, allClasses }) => {
               </table>
             </div>
 
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
-              Showing {classStudents.length} student{classStudents.length !== 1 ? 's' : ''}
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={classStudents.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={(newSize) => {
+                setItemsPerPage(newSize);
+                setCurrentPage(1);
+              }}
+            />
           </>
         )}
       </div>

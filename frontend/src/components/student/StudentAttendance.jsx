@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import QRScanner from './QRScanner';
 import { supabase } from '../../lib/supabaseClient';
+import { API_URL } from '../../lib/apiConfig';
 
 const StudentAttendance = ({ attendance, courses, loading, error }) => {
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [showScanner, setShowScanner] = useState(false);
 
+  // Safety checks
+  const safeCourses = Array.isArray(courses) ? courses : [];
+  const safeAttendance = Array.isArray(attendance) ? attendance : [];
+
   // Calculate attendance percentage for each subject (aggregating all sessions)
   const calculateAttendanceStats = () => {
     const stats = {};
     
-    courses.forEach(subject => {
+    safeCourses.forEach(subject => {
       // Get all class IDs for this subject
       const classIds = subject.allClassIds || [subject.id];
       
       // Get attendance records from ALL sessions of this subject
-      const subjectAttendance = attendance.filter(record => classIds.includes(record.class_id));
+      const subjectAttendance = safeAttendance.filter(record => classIds.includes(record.class_id));
       
       // Count unique dates instead of total records (to avoid counting duplicates)
       const uniqueDates = new Set(
@@ -42,7 +47,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
 
   // Get recent attendance records
   const getRecentRecords = () => {
-    return attendance
+    return safeAttendance
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 10);
   };
@@ -53,7 +58,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
   const filteredRecords = selectedCourse === 'all'
     ? recentRecords
     : (() => {
-        const selectedSubject = courses.find(c => c.id === parseInt(selectedCourse));
+        const selectedSubject = safeCourses.find(c => c.id === parseInt(selectedCourse));
         if (!selectedSubject) return [];
         const classIds = selectedSubject.allClassIds || [selectedSubject.id];
         return recentRecords.filter(record => classIds.includes(record.class_id));
@@ -62,11 +67,11 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
   // Get subject name by class ID (works with sessions within subjects)
   const getCourseName = (classId) => {
     // Check if it's a session within a subject
-    const subject = courses.find(c => c.allClassIds && c.allClassIds.includes(classId));
+    const subject = safeCourses.find(c => c.allClassIds && c.allClassIds.includes(classId));
     if (subject) return subject.subject_code || subject.name;
     
     // Legacy: direct class match
-    const course = courses.find(c => c.id === classId);
+    const course = safeCourses.find(c => c.id === classId);
     return course?.name || 'Unknown Course';
   };
 
@@ -178,7 +183,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
               className="px-3 py-1 text-sm rounded-lg border border-gray-300 bg-white text-gray-900"
             >
               <option value="all">All Subjects</option>
-              {courses.map(course => (
+              {safeCourses.map(course => (
                 <option key={course.id} value={course.id}>
                   {course.subject_code || course.name}
                 </option>
@@ -251,7 +256,7 @@ const StudentAttendance = ({ attendance, courses, loading, error }) => {
             }
 
             try {
-              const response = await fetch('http://localhost:5000/api/student/mark-attendance', {
+              const response = await fetch(`${API_URL}/student/mark-attendance`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,

@@ -93,7 +93,7 @@ export default function AuthCard() {
 
     try {
       const res = await axios.post(`${API_URL}/auth/signup`, signupData);
-      alert("Signup successful! Please login.");
+      alert("✅ Signup successful! Please check your email to verify your account before logging in.");
       setIsSignup(false);
       setSignupData({
         name: "",
