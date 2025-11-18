@@ -5,8 +5,6 @@ const adminRoutes = require("./routes/admin");
 const studentRoutes = require("./routes/student");
 const teacherRoutes = require("./routes/teacher");
 const notificationRoutes = require("./routes/notifications");
-const integrationRoutes = require("./routes/integrations");
-const bulkEnrollmentRoutes = require("./routes/bulkEnrollment");
 const { initializeWeeklyScheduler } = require("./services/weeklyScheduler");
 require("dotenv").config();
 const supabase = require("./db"); // ✅ This is now Supabase
@@ -57,8 +55,6 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/integrations", integrationRoutes);
-app.use("/api/bulk-enrollment", bulkEnrollmentRoutes);
 
 // ✅ ADD THESE ROUTES:
 app.get('/', (req, res) => {

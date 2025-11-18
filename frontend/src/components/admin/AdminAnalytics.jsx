@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
-const AdminAnalytics = ({ users = [], classes = [], enrollments = [], attendance = [] }) => {
+const AdminAnalytics = ({ users = [], classes = [], enrollments = [] }) => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalStudents: 0,
     totalTeachers: 0,
     totalAdmins: 0,
     totalClasses: 0,
-    totalEnrollments: 0,
-    totalAttendanceRecords: 0,
-    presentCount: 0,
-    absentCount: 0,
-    lateCount: 0
+    totalEnrollments: 0
   });
 
   useEffect(() => {
     calculateStats();
-  }, [users, classes, enrollments, attendance]);
+  }, [users, classes, enrollments]);
 
   const calculateStats = () => {
     try {
@@ -28,31 +24,18 @@ const AdminAnalytics = ({ users = [], classes = [], enrollments = [], attendance
       const totalClasses = classes?.length || 0;
       const totalEnrollments = enrollments?.length || 0;
 
-      const totalAttendanceRecords = attendance?.length || 0;
-      const presentCount = attendance?.filter(a => a.status === 'present').length || 0;
-      const absentCount = attendance?.filter(a => a.status === 'absent').length || 0;
-      const lateCount = attendance?.filter(a => a.status === 'late').length || 0;
-
       setStats({
         totalUsers,
         totalStudents,
         totalTeachers,
         totalAdmins,
         totalClasses,
-        totalEnrollments,
-        totalAttendanceRecords,
-        presentCount,
-        absentCount,
-        lateCount
+        totalEnrollments
       });
     } catch (err) {
       console.error('Error calculating analytics:', err);
     }
   };
-
-  const attendancePercentage = stats.totalAttendanceRecords > 0
-    ? Math.round((stats.presentCount / stats.totalAttendanceRecords) * 100)
-    : 0;
 
   return (
     <div className="w-full max-w-6xl mx-auto pt-8">
@@ -189,125 +172,6 @@ const AdminAnalytics = ({ users = [], classes = [], enrollments = [], attendance
                 </div>
               </div>
               <p className="text-xs text-gray-600 mt-2">Students per class</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Attendance Statistics */}
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">Attendance Statistics</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl shadow-lg border border-gray-200/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Records</p>
-                  <p className="text-4xl font-bold text-blue-700 mt-2">{stats.totalAttendanceRecords}</p>
-                </div>
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">Attendance entries</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl shadow-lg border border-gray-200/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Present</p>
-                  <p className="text-4xl font-bold text-green-700 mt-2">{stats.presentCount}</p>
-                </div>
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">{attendancePercentage}% attendance rate</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl shadow-lg border border-gray-200/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Absent</p>
-                  <p className="text-4xl font-bold text-red-700 mt-2">{stats.absentCount}</p>
-                </div>
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">No show records</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-2xl shadow-lg border border-gray-200/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Late</p>
-                  <p className="text-4xl font-bold text-yellow-700 mt-2">{stats.lateCount}</p>
-                </div>
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">Late arrivals</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Attendance Breakdown Chart */}
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">Attendance Breakdown</h3>
-          <div className="bg-gray-50/80 rounded-xl p-6 border border-gray-200/50">
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">Present</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {stats.presentCount} ({stats.totalAttendanceRecords > 0 ? Math.round((stats.presentCount / stats.totalAttendanceRecords) * 100) : 0}%)
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-green-500 h-3 rounded-full"
-                    style={{ width: `${stats.totalAttendanceRecords > 0 ? (stats.presentCount / stats.totalAttendanceRecords) * 100 : 0}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">Absent</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {stats.absentCount} ({stats.totalAttendanceRecords > 0 ? Math.round((stats.absentCount / stats.totalAttendanceRecords) * 100) : 0}%)
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-red-500 h-3 rounded-full"
-                    style={{ width: `${stats.totalAttendanceRecords > 0 ? (stats.absentCount / stats.totalAttendanceRecords) * 100 : 0}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">Late</span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {stats.lateCount} ({stats.totalAttendanceRecords > 0 ? Math.round((stats.lateCount / stats.totalAttendanceRecords) * 100) : 0}%)
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className="bg-yellow-500 h-3 rounded-full"
-                    style={{ width: `${stats.totalAttendanceRecords > 0 ? (stats.lateCount / stats.totalAttendanceRecords) * 100 : 0}%` }}
-                  ></div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
